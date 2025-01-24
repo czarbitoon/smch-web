@@ -1,4 +1,5 @@
-// src/components/ProtectedRoute.jsx
+// src\components\ProtectedRoute.jsx
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -6,12 +7,10 @@ import { AuthContext } from '../context/AuthContext.jsx';
 const ProtectedRoute = ({ component: Component, ...rest }) => {
   const { isAuthenticated } = React.useContext(AuthContext);
 
-  return (
-    isAuthenticated ? (
-      <Component {...rest} />
-    ) : (
-      <Navigate to="/login" replace />
-    )
+  return isAuthenticated ? (
+    <Component {...rest} />
+  ) : (
+    <Navigate to="/login" replace />
   );
 };
 

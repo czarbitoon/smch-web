@@ -35,7 +35,7 @@ function App() {
             <AppBar position="static" sx={{ backgroundColor: '#1877f2' }}>
               <Toolbar>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: '#ffffff' }}>
-                  SMC Hardware Monitoring 
+                  SMC Hardware Monitoring
                 </Typography>
               </Toolbar>
             </AppBar>
