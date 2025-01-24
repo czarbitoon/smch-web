@@ -1,24 +1,22 @@
-// AdminDashboard.jsx
+// StaffDashboard.jsx
 
 import React from 'react';
 import { Container, Typography, Button, Box } from '@mui/material';
-import AddOffice from './AddOffice';
-import AddDevice from './AddDevice';
 import ViewReports from './ViewReports';
+import ResolveReport from './ResolveReport';
 
-function AdminDashboard() {
+function StaffDashboard() {
   return (
     <Container maxWidth="lg">
       <Typography variant="h4" component="h1" gutterBottom>
-        Admin Dashboard
+        Staff Dashboard
       </Typography>
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <AddOffice />
-        <AddDevice />
         <ViewReports />
+        <ResolveReport />
       </Box>
     </Container>
   );
 }
 
-export default AdminDashboard;
+export default StaffDashboard;

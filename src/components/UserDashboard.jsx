@@ -1,24 +1,22 @@
-// AdminDashboard.jsx
+// UserDashboard.jsx
 
 import React from 'react';
 import { Container, Typography, Button, Box } from '@mui/material';
-import AddOffice from './AddOffice';
-import AddDevice from './AddDevice';
+import ViewDevices from './ViewDevices';
 import ViewReports from './ViewReports';
 
-function AdminDashboard() {
+function UserDashboard() {
   return (
     <Container maxWidth="lg">
       <Typography variant="h4" component="h1" gutterBottom>
-        Admin Dashboard
+        User Dashboard
       </Typography>
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <AddOffice />
-        <AddDevice />
+        <ViewDevices />
         <ViewReports />
       </Box>
     </Container>
   );
 }
 
-export default AdminDashboard;
+export default UserDashboard;
