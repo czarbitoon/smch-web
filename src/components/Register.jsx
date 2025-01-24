@@ -1,22 +1,26 @@
-// src\components\Login.jsx
+// src\components\Register.jsx
 
 import React, { useState } from 'react';
 import { Container, Typography, Button, Box, TextField } from '@mui/material';
 import axios from 'axios';
 
-function Login({ setAuthenticated }) {
+function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleLogin = (e) => {
+  const handleRegister = (e) => {
     e.preventDefault();
-    axios.post('http://127.0.0.1:8000/api/login', {
+    axios.post('http://127.0.0.1:8000/api/register', {
+      name: name,
       email: email,
       password: password,
+      password_confirmation: confirmPassword,
     })
       .then((response) => {
         console.log(response.data);
-        setAuthenticated(true);
+        alert('Registration successful!');
       })
       .catch((error) => {
         console.error(error);
@@ -27,9 +31,18 @@ function Login({ setAuthenticated }) {
     <Container maxWidth="sm">
       <Box sx={{ marginTop: 8, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Login
+          Register
         </Typography>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleRegister}>
+          <TextField
+            label="Name"
+            type="text"
+            fullWidth
+            margin="normal"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
           <TextField
             label="Email"
             type="email"
@@ -48,8 +61,17 @@ function Login({ setAuthenticated }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <TextField
+            label="Confirm Password"
+            type="password"
+            fullWidth
+            margin="normal"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
           <Button type="submit" variant="contained" color="primary">
-            Login
+            Register
           </Button>
         </form>
       </Box>
@@ -57,4 +79,4 @@ function Login({ setAuthenticated }) {
   );
 }
 
-export default Login;
+export default Register;

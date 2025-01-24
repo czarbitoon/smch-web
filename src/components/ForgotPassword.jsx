@@ -1,22 +1,20 @@
-// src\components\Login.jsx
+// src\components\ForgotPassword.jsx
 
 import React, { useState } from 'react';
 import { Container, Typography, Button, Box, TextField } from '@mui/material';
 import axios from 'axios';
 
-function Login({ setAuthenticated }) {
+function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+  const handleForgotPassword = (e) => {
     e.preventDefault();
-    axios.post('http://127.0.0.1:8000/api/login', {
+    axios.post('http://127.0.0.1:8000/api/forgot-password', {
       email: email,
-      password: password,
     })
       .then((response) => {
         console.log(response.data);
-        setAuthenticated(true);
+        alert('Password reset link sent to your email!');
       })
       .catch((error) => {
         console.error(error);
@@ -27,9 +25,9 @@ function Login({ setAuthenticated }) {
     <Container maxWidth="sm">
       <Box sx={{ marginTop: 8, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Login
+          Forgot Password
         </Typography>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleForgotPassword}>
           <TextField
             label="Email"
             type="email"
@@ -39,17 +37,8 @@ function Login({ setAuthenticated }) {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <TextField
-            label="Password"
-            type="password"
-            fullWidth
-            margin="normal"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
           <Button type="submit" variant="contained" color="primary">
-            Login
+            Send Password Reset Link
           </Button>
         </form>
       </Box>
@@ -57,4 +46,4 @@ function Login({ setAuthenticated }) {
   );
 }
 
-export default Login;
+export default ForgotPassword;

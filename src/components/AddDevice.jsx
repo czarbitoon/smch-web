@@ -1,4 +1,4 @@
-// AddDevice.jsx
+// src\components\AddDevice.jsx
 
 import React, { useState } from 'react';
 import { Container, Typography, Button, Box, TextField } from '@mui/material';
