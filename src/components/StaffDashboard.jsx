@@ -3,7 +3,6 @@
 import React from 'react';
 import { Container, Typography, Box, Button, Avatar, Grid, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
 import ProfilePictureUpload from './ProfilePictureUpload';
 
 function StaffDashboard() {

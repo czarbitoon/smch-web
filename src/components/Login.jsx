@@ -1,20 +1,20 @@
-// src\components\Login.jsx
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import { Container, Typography, Button, Box, TextField } from '@mui/material';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Container, Typography, Button, Box, TextField, CircularProgress } from '@mui/material';
+import axios from '../axiosInstance'; // Import the custom Axios instance
 
-function Login({ setAuthenticated }) {
+function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [loading, setLoading] = useState(false); // Loading state
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/login', {
+      const response = await axios.post('/login', { // Use the custom Axios instance
         email: email,
         password: password,
       });
@@ -24,14 +24,13 @@ function Login({ setAuthenticated }) {
       // Store the token in localStorage
       localStorage.setItem('token', response.data.access_token);
 
-      // Set authenticated to true
-      setAuthenticated(true);
-
       // Redirect to the dashboard
-      navigate('/admin/dashboard'); // Use navigate to redirect
+      navigate('/admin/dashboard');
     } catch (error) {
       console.error('Login Error:', error.response ? error.response.data : error.message);
       alert('Login failed. Please check your credentials and try again.');
+    } finally {
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -60,8 +59,8 @@ function Login({ setAuthenticated }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" variant="contained" color="primary">
-            Login
+          <Button type="submit" variant="contained" color="primary" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Login'}
           </Button>
         </form>
       </Box>
