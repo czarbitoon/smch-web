@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Button, Box, TextField, CircularProgress } from '@mui/material';
+import { Container, Typography, Button, Box, TextField, CircularProgress, Snackbar } from '@mui/material';
 import axios from '../axiosInstance'; // Import the custom Axios instance
+import PropTypes from 'prop-types'; // Import PropTypes for prop validation
 
-function Login() {
+function Login({ setAuthenticated }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(''); // Error state
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -14,7 +16,10 @@ function Login() {
     setLoading(true); // Set loading to true
 
     try {
-      const response = await axios.post('/login', { // Use the custom Axios instance
+      // Fetch CSRF token
+      await axios.get('/sanctum/csrf-cookie');
+
+      const response = await axios.post('/login', {
         email: email,
         password: password,
       });
@@ -24,19 +29,22 @@ function Login() {
       // Store the token in localStorage
       localStorage.setItem('token', response.data.access_token);
 
+      // Set authenticated state
+      setAuthenticated(true);
+
       // Redirect to the dashboard
       navigate('/admin/dashboard');
     } catch (error) {
       console.error('Login Error:', error.response ? error.response.data : error.message);
-      alert('Login failed. Please check your credentials and try again.');
+      setError('Login failed. Please check your credentials and try again.');
     } finally {
       setLoading(false); // Reset loading state
     }
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ marginTop: 8, textAlign: 'center' }}>
+    <Container maxWidth="sm" sx={{ backgroundColor: '#f5f5f5', padding: 4, borderRadius: 2, boxShadow: 3 }}>
+      <Box sx={{ textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Login
         </Typography>
@@ -59,13 +67,26 @@ function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" variant="contained" color="primary" disabled={loading}>
+          <Button type="submit" variant="contained" color="primary" disabled={loading} sx={{ marginTop: 2 }}>
             {loading ? <CircularProgress size={24} /> : 'Login'}
           </Button>
         </form>
+        {error && (
+          <Snackbar
+            open={Boolean(error)}
+            autoHideDuration={6000}
+            onClose={() => setError('')}
+            message={error}
+          />
+        )}
       </Box>
     </Container>
   );
 }
+
+// PropTypes validation
+Login.propTypes = {
+  setAuthenticated: PropTypes.func.isRequired,
+};
 
 export default Login;
