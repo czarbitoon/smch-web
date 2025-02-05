@@ -16,9 +16,8 @@ function Login({ setAuthenticated }) {
     setLoading(true); // Set loading to true
 
     try {
-      // Fetch CSRF token
+      // Fetch CSRF token and login in one step
       await axios.get('/sanctum/csrf-cookie');
-
       const response = await axios.post('/login', {
         email: email,
         password: password,
