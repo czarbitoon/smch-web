@@ -1,36 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, List, ListItem, ListItemText, Button } from '@mui/material';
+import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Snackbar } from '@mui/material';
 import axios from 'axios';
 
 const Devices = () => {
   const [devices, setDevices] = useState([]);
+  const [issueDescription, setIssueDescription] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Fetch devices from the API
-    axios.get('http://127.0.0.1:8000/api/showDevice')
-      .then(response => setDevices(response.data))
-      .catch(error => console.error('Error fetching devices:', error));
+    const fetchDevices = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/showDevice`);
+        setDevices(response.data);
+      } catch (error) {
+        setError('Error fetching devices');
+        console.error('Error fetching devices:', error);
+      }
+    };
+
+    fetchDevices();
   }, []);
 
-  const logIssue = (deviceId) => {
-    // Logic to log an issue for the device
-    axios.post('http://127.0.0.1:8000/api/logIssue', {
-      device_id: deviceId,
-      issue_description: 'Issue description here' // Replace with actual input
-    })
-    .then(response => {
-      console.log(response.data.message);
-    })
-    .catch(error => console.error('Error logging issue:', error));
+  const logIssue = async (deviceId) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/logIssue`, {
+        device_id: deviceId,
+        issue_description: issueDescription,
+      });
+      setIssueDescription(''); // Clear input after logging
+    } catch (error) {
+      setError('Error logging issue');
+      console.error('Error logging issue:', error);
+    }
   };
 
-  const getDeviceStatus = (deviceId) => {
-    // Logic to get the status of the device
-    axios.get(`http://127.0.0.1:8000/api/deviceStatus/${deviceId}`)
-      .then(response => {
-        alert(`Device Status: ${response.data.status}`);
-      })
-      .catch(error => console.error('Error fetching device status:', error));
+  const getDeviceStatus = async (deviceId) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/deviceStatus/${deviceId}`);
+      alert(`Device Status: ${response.data.status}`);
+    } catch (error) {
+      setError('Error fetching device status');
+      console.error('Error fetching device status:', error);
+    }
   };
 
   return (
@@ -39,6 +51,13 @@ const Devices = () => {
         Devices
       </Typography>
       <Box sx={{ marginTop: 4 }}>
+        <TextField
+          label="Issue Description"
+          value={issueDescription}
+          onChange={(e) => setIssueDescription(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
         <List>
           {devices.map(device => (
             <ListItem key={device.id}>
@@ -49,6 +68,14 @@ const Devices = () => {
           ))}
         </List>
       </Box>
+      {error && (
+        <Snackbar
+          open={Boolean(error)}
+          autoHideDuration={6000}
+          onClose={() => setError('')}
+          message={error}
+        />
+      )}
     </Container>
   );
 };

@@ -78,6 +78,14 @@ function Login({ setAuthenticated }) {
             message={error}
           />
         )}
+        <Button 
+          variant="outlined" 
+          color="primary" 
+          onClick={() => navigate('/register')} // Navigate to register page
+          sx={{ marginTop: 2 }}
+        >
+          Register
+        </Button>
       </Box>
     </Container>
   );

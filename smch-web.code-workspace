@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "smch-web",
+			"path": "."
+		},
+		{
+			"name": "Backend",
+			"path": "../Backend"
+		},
+		{
+			"path": "../coreui-free-react-admin-template-main"
+		}
+	],
+	"settings": {}
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CContainer, CCard, CCardBody, CCardHeader, CButton, CAvatar, CRow, CCol, CSpinner } from '@coreui/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link for navigation
 import axios from '../axiosInstance'; // Import the custom Axios instance
 
 function AdminDashboard() {
@@ -28,7 +28,7 @@ function AdminDashboard() {
     try {
       await axios.post('/logout'); // Call the logout API
       localStorage.removeItem('token'); // Remove token from localStorage
-      navigate('/login'); // Redirect to login
+      navigate('/login', { replace: true }); // Redirect to login
     } catch (error) {
       console.error('Logout Error:', error);
     }
@@ -50,8 +50,11 @@ function AdminDashboard() {
             <CRow className="mb-4">
               <CCol xs={12} className="text-center">
                 <CAvatar
-                  src={user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : 'https://via.placeholder.com/150'}
+                  src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : '/default-avatar.png'}
                   size="lg"
+                  onError={(e) => {
+                    e.target.src = '/default-avatar.png'; // Fallback image
+                  }}
                 />
                 <h5>{user.name}</h5>
                 <p>{user.email}</p>
@@ -75,7 +78,9 @@ function AdminDashboard() {
                 <CCardBody>
                   <h6>Manage Offices</h6>
                   <p>Add, update, or remove offices.</p>
-                  <CButton color="primary">Go to Offices</CButton>
+                  <Link to="/offices">
+                    <CButton color="primary">Go to Offices</CButton>
+                  </Link>
                 </CCardBody>
               </CCard>
             </CCol>
@@ -84,7 +89,9 @@ function AdminDashboard() {
                 <CCardBody>
                   <h6>Manage Devices</h6>
                   <p>Add, update, or remove devices.</p>
-                  <CButton color="primary">Go to Devices</CButton>
+                  <Link to="/devices">
+                    <CButton color="primary">Go to Devices</CButton>
+                  </Link>
                 </CCardBody>
               </CCard>
             </CCol>
