@@ -1,6 +1,8 @@
 // src/components/UserDashboard.jsx
 
 import React, { useEffect, useState } from 'react';
+import { CircularProgress, Alert } from '@mui/material'; // Import CircularProgress and Alert
+
 import { Container, Typography, Box, Button, Avatar, Grid, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ProfilePictureUpload from './ProfilePictureUpload';
@@ -8,16 +10,23 @@ import axios from '../axiosInstance'; // Import the custom Axios instance
 
 function UserDashboard() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(''); // Error state
   const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true); // Set loading to true
+
       try {
         const response = await axios.get('/profile'); // Fetch user profile
         setUser(response.data.user);
       } catch (error) {
         console.error('Error fetching user data:', error);
-        navigate('/login'); // Redirect to login if there's an error
+        setError('Failed to fetch user data. Redirecting to login.'); // Set error message
+        setTimeout(() => navigate('/login'), 3000); // Redirect after 3 seconds
+
       }
     };
 
@@ -34,10 +43,17 @@ function UserDashboard() {
     }
   };
 
+  if (loading) {
+    return <CircularProgress />; // Show loading indicator
+  }
+
   return (
+
     <Container maxWidth="lg">
       <Box sx={{ marginTop: 4, textAlign: 'center' }}>
+        {error && <Alert severity="error">{error}</Alert>} {/* Error Message */}
         <Typography variant="h4" component="h1" gutterBottom>
+
           User Dashboard
         </Typography>
 

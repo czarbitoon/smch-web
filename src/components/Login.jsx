@@ -1,43 +1,38 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box, TextField, CircularProgress, Snackbar } from '@mui/material';
-import axios from '../axiosInstance'; // Import the custom Axios instance
-import PropTypes from 'prop-types'; // Import PropTypes for prop validation
+import axios from '../axiosInstance';
+import { AuthContext } from '../context/AuthProvider'; // Import AuthContext
 
-function Login({ setAuthenticated }) {
+function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(''); // Error state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { setIsAuthenticated } = useContext(AuthContext); // Use context instead of prop
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true); // Set loading to true
+    setLoading(true);
 
     try {
-      // Fetch CSRF token and login in one step
       await axios.get('/sanctum/csrf-cookie');
-      const response = await axios.post('/login', {
-        email: email,
-        password: password,
-      });
+      const response = await axios.post('/login', { email, password });
 
       console.log('Login Response:', response.data);
+      console.log('Storing token:', response.data.access_token);
 
-      // Store the token in localStorage
       localStorage.setItem('token', response.data.access_token);
 
-      // Set authenticated state
-      setAuthenticated(true);
+      setIsAuthenticated(true); // Update auth state
 
-      // Redirect to the dashboard
       navigate('/admin/dashboard');
     } catch (error) {
       console.error('Login Error:', error.response ? error.response.data : error.message);
       setError('Login failed. Please check your credentials and try again.');
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -81,7 +76,7 @@ function Login({ setAuthenticated }) {
         <Button 
           variant="outlined" 
           color="primary" 
-          onClick={() => navigate('/register')} // Navigate to register page
+          onClick={() => navigate('/register')} 
           sx={{ marginTop: 2 }}
         >
           Register
@@ -90,10 +85,5 @@ function Login({ setAuthenticated }) {
     </Container>
   );
 }
-
-// PropTypes validation
-Login.propTypes = {
-  setAuthenticated: PropTypes.func.isRequired,
-};
 
 export default Login;

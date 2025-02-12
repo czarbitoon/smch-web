@@ -9,19 +9,36 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true; // Track mount state
+
     const fetchUserData = async () => {
+      if (!localStorage.getItem('token')) {
+        navigate('/login'); // Redirect to login if not authenticated
+        return;
+      }
+      
       try {
         const response = await axios.get('/profile'); // Fetch user profile
-        setUser(response.data.user);
+        if (isMounted) {
+          setUser(response.data.user);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        navigate('/login'); // Redirect to login if there's an error
+        if (isMounted) {
+          navigate('/login'); // Redirect to login if there's an error
+        }
       } finally {
-        setLoading(false); // Reset loading state
+        if (isMounted) {
+          setLoading(false); // Reset loading state
+        }
       }
     };
 
     fetchUserData();
+
+    return () => {
+      isMounted = false; // Cleanup to prevent updates after unmount
+    };
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -50,9 +67,11 @@ function AdminDashboard() {
             <CRow className="mb-4">
               <CCol xs={12} className="text-center">
                 <CAvatar
-                  src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : '/default-avatar.png'}
+src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://ui-avatars.com/api/?name=User&size=128'}
+
                   size="lg"
-                  onError={(e) => {
+onError={(e) => { 
+
                     e.target.src = '/default-avatar.png'; // Fallback image
                   }}
                 />
