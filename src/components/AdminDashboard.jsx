@@ -1,35 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { CContainer, CCard, CCardBody, CCardHeader, CButton, CAvatar, CRow, CCol, CSpinner } from '@coreui/react';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link for navigation
-import axios from '../axiosInstance'; // Import the custom Axios instance
+import { useNavigate, Link } from 'react-router-dom';
+import axios from '../axiosInstance';
+import { AuthContext } from '../context/AuthProvider';
 
 function AdminDashboard() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
 
   useEffect(() => {
-    let isMounted = true; // Track mount state
+    let isMounted = true;
 
     const fetchUserData = async () => {
       if (!localStorage.getItem('token')) {
-        navigate('/login'); // Redirect to login if not authenticated
+        navigate('/login');
         return;
       }
       
       try {
-        const response = await axios.get('/profile'); // Fetch user profile
+        const response = await axios.get('/profile');
         if (isMounted) {
           setUser(response.data.user);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
         if (isMounted) {
-          navigate('/login'); // Redirect to login if there's an error
+          navigate('/login');
         }
       } finally {
         if (isMounted) {
-          setLoading(false); // Reset loading state
+          setLoading(false);
         }
       }
     };
@@ -37,22 +39,16 @@ function AdminDashboard() {
     fetchUserData();
 
     return () => {
-      isMounted = false; // Cleanup to prevent updates after unmount
+      isMounted = false;
     };
   }, [navigate]);
 
   const handleLogout = async () => {
-    try {
-      await axios.post('/logout'); // Call the logout API
-      localStorage.removeItem('token'); // Remove token from localStorage
-      navigate('/login', { replace: true }); // Redirect to login
-    } catch (error) {
-      console.error('Logout Error:', error);
-    }
+    await logout();
   };
 
   if (loading) {
-    return <CSpinner />; // Show loading indicator
+    return <CSpinner />;
   }
 
   return (
@@ -67,12 +63,10 @@ function AdminDashboard() {
             <CRow className="mb-4">
               <CCol xs={12} className="text-center">
                 <CAvatar
-src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://ui-avatars.com/api/?name=User&size=128'}
-
+                  src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://ui-avatars.com/api/?name=User&size=128'}
                   size="lg"
-onError={(e) => { 
-
-                    e.target.src = '/default-avatar.png'; // Fallback image
+                  onError={(e) => { 
+                    e.target.src = '/default-avatar.png';
                   }}
                 />
                 <h5>{user.name}</h5>
@@ -110,6 +104,24 @@ onError={(e) => {
                   <p>Add, update, or remove devices.</p>
                   <Link to="/devices">
                     <CButton color="primary">Go to Devices</CButton>
+                  </Link>
+                  <Link to="/reports">
+                    <CButton color="primary">Go to Reports</CButton>
+                  </Link>
+                </CCardBody>
+              </CCard>
+            </CCol>
+          </CRow>
+
+          {/* User Management Section */}
+          <CRow className="mt-4">
+            <CCol xs={12}>
+              <CCard>
+                <CCardBody>
+                  <h6>User Management</h6>
+                  <p>Add and manage system users.</p>
+                  <Link to="/admin/register">
+                    <CButton color="success">Add User</CButton>
                   </Link>
                 </CCardBody>
               </CCard>

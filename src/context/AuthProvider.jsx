@@ -8,8 +8,18 @@ const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const logout = () => { 
-    localStorage.removeItem('token');
+const logout = async () => { 
+    setLoading(true); // Set loading to true during logout
+
+    try {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+    } catch (error) {
+        console.error('Logout failed:', error); // Log any errors during logout
+    } finally {
+        setLoading(false); // Set loading to false after logout
+    }
+
     setIsAuthenticated(false);
   };
 

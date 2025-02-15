@@ -5,13 +5,23 @@ import { AuthContext } from './context/AuthProvider';
 import Login from './components/Login'; 
 import Devices from './components/Devices';
 import AdminDashboard from './components/AdminDashboard';
+import Offices from './components/Office'; // Import Offices component
+import Reports from './components/Reports'; // Import Reports component
 import AppHeader from './components/AppHeader'; 
 import AppSidebar from './components/AppSidebar';
 
 function App() {
   const { isAuthenticated, loading } = useContext(AuthContext); // Use global auth state
 
-  if (loading) {
+
+    if (loading) { 
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+                <CircularProgress />
+            </Box>
+        ); // Centered loading indicator
+
+
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -28,7 +38,14 @@ function App() {
           <Routes>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/devices" element={<Devices />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/offices" element={<Offices />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/offices" element={<Offices />} />
             <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+
+
           </Routes>
         </>
       ) : (
