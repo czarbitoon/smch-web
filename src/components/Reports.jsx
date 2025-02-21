@@ -24,7 +24,8 @@ const Reports = () => {
             <ListItem key={report.id}>
               <ListItemText
                 primary={report.title}
-                secondary={`Generated on: ${new Date(report.date).toLocaleDateString()}`}
+                secondary={`Generated on: ${new Date(report.date).toLocaleDateString()} | Reported by: ${report.user?.name || 'Unknown'}`}
+
               />
             </ListItem>
           ))}

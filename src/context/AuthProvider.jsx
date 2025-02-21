@@ -7,20 +7,21 @@ export const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState(null);
+  const [officeId, setOfficeId] = useState(null);
 
-const logout = async () => { 
-    setLoading(true); // Set loading to true during logout
+  const logout = async () => { 
+    setLoading(true);
 
     try {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
+        setUserRole(null);  // Reset role on logout
     } catch (error) {
-        console.error('Logout failed:', error); // Log any errors during logout
+        console.error('Logout failed:', error);
     } finally {
-        setLoading(false); // Set loading to false after logout
+        setLoading(false);
     }
-
-    setIsAuthenticated(false);
   };
 
   useEffect(() => {
@@ -41,13 +42,16 @@ const logout = async () => {
 
         if (isMounted) {
           setIsAuthenticated(response.status === 200);
+          setUserRole(response.data.role);
+          setOfficeId(response.data.office_id);
         }
       } catch (error) {
         console.error('Session validation failed:', error);
 
         if (isMounted) {
           setIsAuthenticated(false);
-          localStorage.removeItem('token'); // Remove invalid token
+          setUserRole(null);
+          localStorage.removeItem('token');
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -62,11 +66,18 @@ const logout = async () => {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>; // Replace with a spinner component if available
+    return <div>Loading...</div>;
   }
 
   return ( 
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      setIsAuthenticated, 
+      logout,
+      userRole,
+      setUserRole,  // Ensure this is included
+      officeId 
+    }}>
       {children}
     </AuthContext.Provider>
   );

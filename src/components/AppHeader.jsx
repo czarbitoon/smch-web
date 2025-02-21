@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import {
   CContainer,
@@ -22,11 +23,17 @@ import {
   cilMenu,
   cilMoon,
   cilSun,
+  cilSpeedometer,
+  cilDevices,
+  cilBuilding
 } from '@coreui/icons';
 
-import  AppHeaderDropdown  from './AppHeaderDropdown'; // Updated import path
+import AppHeaderDropdown from './AppHeaderDropdown';
 
-const AppHeader = () => {
+const AppHeader = ({ onToggleSidebar }) => {
+  AppHeader.propTypes = {
+    onToggleSidebar: PropTypes.func.isRequired
+  };
   const headerRef = useRef();
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
 
@@ -41,42 +48,48 @@ const AppHeader = () => {
     <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
       <CContainer className="border-bottom px-4" fluid>
         <CHeaderToggler
-          onClick={() => console.log('Sidebar toggled')} // Updated to log instead of dispatch
+          onClick={onToggleSidebar}
           style={{ marginInlineStart: '-14px' }}
         >
           <CIcon icon={cilMenu} size="lg" />
         </CHeaderToggler>
-        <CHeaderNav className="d-none d-md-flex">
+        <CHeaderNav className="d-none d-md-flex" style={{ gap: '1rem' }}>
           <CNavItem>
-            <CNavLink to="/admin/dashboard" as={NavLink}>
+            <CNavLink to="/admin/dashboard" as={NavLink} className="nav-link-hover">
+              <CIcon icon={cilSpeedometer} className="me-2" />
               Dashboard
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/devices" as={NavLink}>
+            <CNavLink to="/devices" as={NavLink} className="nav-link-hover">
+              <CIcon icon={cilDevices} className="me-2" />
               Devices
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/offices" as={NavLink}>
+            <CNavLink to="/offices" as={NavLink} className="nav-link-hover">
+              <CIcon icon={cilBuilding} className="me-2" />
               Offices
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav className="ms-auto">
           <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilBell} size="lg" />
+            <CNavLink href="#" className="nav-link-hover">
+              <CIcon icon={cilBell} size="lg" className="me-2" />
+              Notifications
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilList} size="lg" />
+            <CNavLink href="#" className="nav-link-hover">
+              <CIcon icon={cilList} size="lg" className="me-2" />
+              Tasks
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilEnvelopeOpen} size="lg" />
+            <CNavLink href="#" className="nav-link-hover">
+              <CIcon icon={cilEnvelopeOpen} size="lg" className="me-2" />
+              Messages
             </CNavLink>
           </CNavItem>
         </CHeaderNav>

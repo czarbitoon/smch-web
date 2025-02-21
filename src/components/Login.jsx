@@ -10,7 +10,8 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useContext(AuthContext); // Use context instead of prop
+  const { setIsAuthenticated, setUserRole } = useContext(AuthContext); // Use context instead of prop
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,13 +25,46 @@ function Login() {
       console.log('Storing token:', response.data.access_token);
 
       localStorage.setItem('token', response.data.access_token);
+      setIsAuthenticated(true);
+      
+      // Map user type to role string
+      const userRoleMapping = {
+        0: 'user',
+        1: 'staff',
+        2: 'admin',
+        3: 'superadmin'
+      };
+      
+      const userRole = userRoleMapping[response.data.type] || 'user'; // Default to 'user' if type is unrecognized
+      setUserRole(userRole);
 
-      setIsAuthenticated(true); // Update auth state
+      // Navigate to the appropriate dashboard based on user role
+      if (userRole === 'admin' || userRole === 'superadmin') {
 
-      navigate('/admin/dashboard');
+        navigate('/admin/dashboard');
+      } else if (userRole === 'staff') {
+        navigate('/staff/dashboard');
+      } else if (userRole === 'user') {
+
+        navigate('/user/dashboard');
+      } else {
+        navigate('/'); // Fallback if role is not recognized
+      }
+
     } catch (error) {
       console.error('Login Error:', error.response ? error.response.data : error.message);
-      setError('Login failed. Please check your credentials and try again.');
+      if (error.response) {
+        if (error.response.status === 401) {
+          setError('Incorrect password.');
+        } else if (error.response.status === 404) {
+          setError('Email does not exist.');
+        } else {
+          setError('Login failed. Please check your credentials and try again.');
+        }
+      } else {
+        setError('Login failed. Please check your credentials and try again.');
+      }
+
     } finally {
       setLoading(false);
     }

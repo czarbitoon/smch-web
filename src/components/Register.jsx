@@ -1,4 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { 
   Container, 
   Typography, 
@@ -18,10 +20,25 @@ function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [type, setType] = useState(0); // Default to User (0)
+  const [type, setType] = useState(0);
+  const [officeId, setOfficeId] = useState('');
+  const [offices, setOffices] = useState([]);
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const isAdmin = user?.type === 2 || user?.type === 3; // Check if user is Admin or Super Admin
+
+  const isAdmin = user?.type === 2 || user?.type === 3;
+
+  useEffect(() => {
+    // Fetch offices from backend
+    axios.get('http://127.0.0.1:8000/api/offices')
+      .then(response => {
+        setOffices(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching offices:', error);
+      });
+  }, []);
 
   const handleRegister = (e) => {
     e.preventDefault();
@@ -30,7 +47,8 @@ function Register() {
       email: email,
       password: password,
       password_confirmation: confirmPassword,
-      type: isAdmin ? type : 0 // Force type=0 for non-admin users
+      type: isAdmin ? type : 0,
+      office_id: officeId
     };
 
     axios.post('http://127.0.0.1:8000/api/register', userData, {
@@ -41,6 +59,12 @@ function Register() {
     .then((response) => {
       console.log(response.data);
       alert('User created successfully!');
+      if (isAdmin) {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/login');
+      }
+
     })
     .catch((error) => {
       console.error(error);
@@ -91,6 +115,21 @@ function Register() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Office</InputLabel>
+            <Select
+              value={officeId}
+              label="Office"
+              onChange={(e) => setOfficeId(e.target.value)}
+              required
+            >
+              {offices.map(office => (
+                <MenuItem key={office.id} value={office.id}>
+                  {office.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           {isAdmin && (
             <FormControl fullWidth margin="normal">
               <InputLabel>Role</InputLabel>

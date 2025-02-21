@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Snackbar } from '@mui/material';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Button, 
+  TextField, 
+  Snackbar,
+  Chip,
+  Grid,
+  Paper
+} from '@mui/material';
 import axios from 'axios';
 
 const Devices = () => {
@@ -8,10 +21,9 @@ const Devices = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch devices from the API
     const fetchDevices = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/showDevice`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/devices`);
         setDevices(response.data);
       } catch (error) {
         setError('Error fetching devices');
@@ -26,9 +38,9 @@ const Devices = () => {
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/logIssue`, {
         device_id: deviceId,
-        issue_description: issueDescription,
+        issue_description: issueDescription
       });
-      setIssueDescription(''); // Clear input after logging
+      setIssueDescription('');
     } catch (error) {
       setError('Error logging issue');
       console.error('Error logging issue:', error);
@@ -58,15 +70,49 @@ const Devices = () => {
           fullWidth
           margin="normal"
         />
-        <List>
+        <Grid container spacing={3} sx={{ marginTop: 2 }}>
           {devices.map(device => (
-            <ListItem key={device.id}>
-              <ListItemText primary={device.name} secondary={`ID: ${device.id}`} />
-              <Button onClick={() => logIssue(device.id)}>Log Issue</Button>
-              <Button onClick={() => getDeviceStatus(device.id)}>Get Status</Button>
-            </ListItem>
+            <Grid item xs={12} sm={6} md={4} key={device.id}>
+              <Paper elevation={3} sx={{ padding: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {device.name}
+                </Typography>
+                <Box sx={{ marginBottom: 2 }}>
+                  <Chip 
+                    label={`Status: ${device.status}`} 
+                    color={device.status === 'active' ? 'success' : 'error'} 
+                    size="small"
+                  />
+                </Box>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Device ID: {device.id}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Type: {device.type || 'N/A'}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Location: {device.location || 'N/A'}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, marginTop: 2 }}>
+                  <Button 
+                    variant="contained" 
+                    size="small"
+                    onClick={() => logIssue(device.id)}
+                  >
+                    Log Issue
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => getDeviceStatus(device.id)}
+                  >
+                    Check Status
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
           ))}
-        </List>
+        </Grid>
       </Box>
       {error && (
         <Snackbar
