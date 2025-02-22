@@ -48,7 +48,7 @@ function ProfilePictureUpload() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
       <Avatar
-        src={user && user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : 'https://via.placeholder.com/150'}
+        src={user && user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://ui-avatars.com/api/?name=User&size=128'}
         sx={{ width: 100, height: 100 }}
       />
       <input type="file" accept="image/*" onChange={handleFileChange} />

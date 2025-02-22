@@ -27,28 +27,17 @@ function Login() {
       localStorage.setItem('token', response.data.access_token);
       setIsAuthenticated(true);
       
-      // Map user type to role string
-      const userRoleMapping = {
-        0: 'user',
-        1: 'staff',
-        2: 'admin',
-        3: 'superadmin'
-      };
-      
-      const userRole = userRoleMapping[response.data.type] || 'user'; // Default to 'user' if type is unrecognized
+      // Set user role directly from the API response
+      const userRole = response.data.role;
       setUserRole(userRole);
 
-      // Navigate to the appropriate dashboard based on user role
-      if (userRole === 'admin' || userRole === 'superadmin') {
-
+      // Navigate to the appropriate dashboard based on numeric user role
+      if (userRole === 2 || userRole === 3) { // 2 for admin, 3 for superadmin
         navigate('/admin/dashboard');
-      } else if (userRole === 'staff') {
+      } else if (userRole === 1) { // 1 for staff
         navigate('/staff/dashboard');
-      } else if (userRole === 'user') {
-
+      } else { // 0 for regular user
         navigate('/user/dashboard');
-      } else {
-        navigate('/'); // Fallback if role is not recognized
       }
 
     } catch (error) {
@@ -121,3 +110,6 @@ function Login() {
 }
 
 export default Login;
+
+
+

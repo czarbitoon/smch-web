@@ -67,6 +67,16 @@ function ViewReports() {
                   {report.description}
                 </Typography>
 
+                {report.image_path && (
+                  <Box sx={{ mt: 2, mb: 2 }}>
+                    <img
+                      src={`http://127.0.0.1:8000${report.image_path}`}
+                      alt="Report Image"
+                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px' }}
+                    />
+                  </Box>
+                )}
+
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="caption" display="block">
                     Reported by: {report.user?.name || 'Unknown'}
@@ -87,3 +97,4 @@ function ViewReports() {
 }
 
 export default ViewReports;
+

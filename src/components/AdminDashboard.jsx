@@ -1,5 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
-import { CContainer, CCard, CCardBody, CCardHeader, CButton, CAvatar, CRow, CCol, CSpinner } from '@coreui/react';
+import { CContainer, CCard, CCardBody, CCardHeader, CButton, CAvatar, CRow, CCol, CSpinner, CWidgetStatsF } from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilPeople, cilDevices, cilSpreadsheet, cilBuilding } from '@coreui/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider';
@@ -7,22 +9,32 @@ import { AuthContext } from '../context/AuthProvider';
 function AdminDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    users: 0,
+    devices: 0,
+    reports: 0,
+    offices: 0
+  });
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchUserData = async () => {
+    const fetchDashboardData = async () => {
       if (!localStorage.getItem('token')) {
         navigate('/login');
         return;
       }
       
       try {
-        const response = await axios.get('/profile');
+        const [profileRes, statsRes] = await Promise.all([
+          axios.get('/profile'),
+          axios.get('/admin/stats')
+        ]);
         if (isMounted) {
-          setUser(response.data.user);
+          setUser(profileRes.data.user);
+          setStats(statsRes.data);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -36,10 +48,15 @@ function AdminDashboard() {
       }
     };
 
-    fetchUserData();
+    fetchDashboardData();
 
+    // Refresh data every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
+    
+    // Cleanup function
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, [navigate]);
 
@@ -74,7 +91,37 @@ function AdminDashboard() {
               </CCol>
             </CRow>
           )}
-
+          {/* Quick Access Buttons */}
+          <CRow className="mb-4">
+            <CCol xs={12} md={4} className="mb-3">
+              <CRow>
+                <CCol xs={12} className="mb-2">
+                  <CButton color="primary" className="w-100" component={Link} to="/admin/devices">
+                    <CIcon icon={cilDevices} className="me-2" />
+                    Manage Devices
+                  </CButton>
+                </CCol>
+                <CCol xs={12}>
+                  <CButton color="success" className="w-100" component={Link} to="/admin/devices/add">
+                    <CIcon icon={cilDevices} className="me-2" />
+                    Add New Device
+                  </CButton>
+                </CCol>
+              </CRow>
+            </CCol>
+            <CCol xs={12} md={4} className="mb-3">
+              <CButton color="success" className="w-100" component={Link} to="/admin/reports">
+                <CIcon icon={cilSpreadsheet} className="me-2" />
+                View Reports
+              </CButton>
+            </CCol>
+            <CCol xs={12} md={4} className="mb-3">
+              <CButton color="info" className="w-100" component={Link} to="/offices">
+                <CIcon icon={cilBuilding} className="me-2" />
+                Manage Offices
+              </CButton>
+            </CCol>
+          </CRow>
           {/* Logout Button */}
           <CRow className="mb-4">
             <CCol xs={12} className="text-center">
@@ -84,16 +131,61 @@ function AdminDashboard() {
             </CCol>
           </CRow>
 
-          {/* Dashboard Content */}
+          {/* Stats Widgets */}
+          <CRow className="mb-4">
+            <CCol xs={12} sm={6} lg={3}>
+              <CWidgetStatsF
+                className="mb-3"
+                icon={<CIcon icon={cilPeople} height={24} />}
+                title="Total Users"
+                value={stats.users}
+                color="primary"
+              />
+            </CCol>
+            <CCol xs={12} sm={6} lg={3}>
+              <CWidgetStatsF
+                className="mb-3"
+                icon={<CIcon icon={cilDevices} height={24} />}
+                title="Total Devices"
+                value={stats.devices}
+                color="info"
+              />
+            </CCol>
+            <CCol xs={12} sm={6} lg={3}>
+              <CWidgetStatsF
+                className="mb-3"
+                icon={<CIcon icon={cilSpreadsheet} height={24} />}
+                title="Active Reports"
+                value={stats.reports}
+                color="warning"
+              />
+            </CCol>
+            <CCol xs={12} sm={6} lg={3}>
+              <CWidgetStatsF
+                className="mb-3"
+                icon={<CIcon icon={cilBuilding} height={24} />}
+                title="Total Offices"
+                value={stats.offices}
+                color="success"
+              />
+            </CCol>
+          </CRow>
+
+          {/* Quick Actions */}
           <CRow>
             <CCol xs={12} md={6}>
               <CCard>
                 <CCardBody>
                   <h6>Manage Offices</h6>
                   <p>Add, update, or remove offices.</p>
-                  <Link to="/offices">
-                    <CButton color="primary">Go to Offices</CButton>
-                  </Link>
+                  <div className="d-flex gap-2">
+                    <Link to="/offices">
+                      <CButton color="primary">Go to Offices</CButton>
+                    </Link>
+                    <Link to="/offices/add">
+                      <CButton color="success">Add Office</CButton>
+                    </Link>
+                  </div>
                 </CCardBody>
               </CCard>
             </CCol>
@@ -102,12 +194,17 @@ function AdminDashboard() {
                 <CCardBody>
                   <h6>Manage Devices</h6>
                   <p>Add, update, or remove devices.</p>
-                  <Link to="/devices">
-                    <CButton color="primary">Go to Devices</CButton>
-                  </Link>
-                  <Link to="/reports">
-                    <CButton color="primary">Go to Reports</CButton>
-                  </Link>
+                  <div className="d-flex gap-2">
+                    <Link to="/devices">
+                      <CButton color="primary">Go to Devices</CButton>
+                    </Link>
+                    <Link to="/devices/add">
+                      <CButton color="success">Add Device</CButton>
+                    </Link>
+                    <Link to="/reports">
+                      <CButton color="primary">Go to Reports</CButton>
+                    </Link>
+                  </div>
                 </CCardBody>
               </CCard>
             </CCol>
@@ -134,3 +231,7 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
+
+
+
+

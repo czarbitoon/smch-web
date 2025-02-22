@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   CContainer,
   CDropdown,
@@ -25,8 +25,10 @@ import {
   cilSun,
   cilSpeedometer,
   cilDevices,
-  cilBuilding
+  cilBuilding,
+  cilNotes
 } from '@coreui/icons';
+import { AuthContext } from '../context/AuthProvider';
 
 import AppHeaderDropdown from './AppHeaderDropdown';
 
@@ -35,7 +37,12 @@ const AppHeader = ({ onToggleSidebar }) => {
     onToggleSidebar: PropTypes.func.isRequired
   };
   const headerRef = useRef();
+  const location = useLocation();
+  const { user } = useContext(AuthContext);
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  
+  const isAdmin = user?.role === 1;
+  const isStaff = user?.role === 2;
 
   useEffect(() => {
     document.addEventListener('scroll', () => {
@@ -55,21 +62,49 @@ const AppHeader = ({ onToggleSidebar }) => {
         </CHeaderToggler>
         <CHeaderNav className="d-none d-md-flex" style={{ gap: '1rem' }}>
           <CNavItem>
-            <CNavLink to="/admin/dashboard" as={NavLink} className="nav-link-hover">
+            <CNavLink 
+              to={isAdmin ? '/admin/dashboard' : isStaff ? '/staff/dashboard' : '/user/dashboard'} 
+              as={NavLink} 
+              className="nav-link-hover"
+              active={location.pathname.includes('dashboard')}
+            >
               <CIcon icon={cilSpeedometer} className="me-2" />
               Dashboard
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/devices" as={NavLink} className="nav-link-hover">
+            <CNavLink 
+              to="/devices" 
+              as={NavLink} 
+              className="nav-link-hover"
+              active={location.pathname.includes('devices')}
+            >
               <CIcon icon={cilDevices} className="me-2" />
               Devices
             </CNavLink>
           </CNavItem>
+          {(isAdmin || isStaff) && (
+            <CNavItem>
+              <CNavLink 
+                to="/offices" 
+                as={NavLink} 
+                className="nav-link-hover"
+                active={location.pathname.includes('offices')}
+              >
+                <CIcon icon={cilBuilding} className="me-2" />
+                Offices
+              </CNavLink>
+            </CNavItem>
+          )}
           <CNavItem>
-            <CNavLink to="/offices" as={NavLink} className="nav-link-hover">
-              <CIcon icon={cilBuilding} className="me-2" />
-              Offices
+            <CNavLink 
+              to="/reports" 
+              as={NavLink} 
+              className="nav-link-hover"
+              active={location.pathname.includes('reports')}
+            >
+              <CIcon icon={cilNotes} className="me-2" />
+              Reports
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
