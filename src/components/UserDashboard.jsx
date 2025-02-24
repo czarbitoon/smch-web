@@ -32,17 +32,9 @@ function UserDashboard() {
 
         // Handle potential nested user object structures
         const userData = profileRes.data.user || profileRes.data;
-
-        // Add detailed console logging
-        console.log('Full profile response:', profileRes.data);
-        console.log('Extracted user data:', userData);
         
         // Check user type (0=user, 1=staff, 2=admin, 3=superadmin)
         const userType = userData.type || 0;
-        
-        // Add console log to track user type
-        console.log('Detected user type:', userType);
-        console.log('Type value:', typeof userType);
         
         // Redirect based on user type
         if (userType === 1) {
@@ -59,7 +51,6 @@ function UserDashboard() {
         setStats(statsRes.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching user data:', error);
         setError(error.message || 'Failed to fetch user data. Redirecting to login.');
         setLoading(false);
         setTimeout(() => navigate('/login'), 3000);

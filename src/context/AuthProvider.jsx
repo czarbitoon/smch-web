@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null);
+  const [userType, setUserType] = useState(0); // Initialize with 0 for regular user
   const [officeId, setOfficeId] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -17,7 +17,7 @@ const AuthProvider = ({ children }) => {
     try {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
-        setUserRole(null);  // Reset role on logout
+        setUserType(0);  // Reset type to 0 on logout
         setUser(null); // Reset user on logout
     } catch (error) {
         console.error('Logout failed:', error);
@@ -34,6 +34,7 @@ const AuthProvider = ({ children }) => {
       if (!token) {
         if (isMounted) {
           setIsAuthenticated(false);
+          setUserType(0); // Ensure default type is 0
           setLoading(false);
         }
         return;
@@ -44,7 +45,10 @@ const AuthProvider = ({ children }) => {
 
         if (isMounted) {
           setIsAuthenticated(response.status === 200);
-          setUserRole(response.data.role);
+          // Ensure userType is always a valid number
+          const typeValue = response.data?.type;
+          const parsedType = Number(typeValue);
+          setUserType(Number.isNaN(parsedType) ? 0 : parsedType);
           setOfficeId(response.data.office_id);
           setUser(response.data); // Store the full user object
         }
@@ -53,7 +57,7 @@ const AuthProvider = ({ children }) => {
 
         if (isMounted) {
           setIsAuthenticated(false);
-          setUserRole(null);
+          setUserType(0); // Set to default type instead of null
           setUser(null);
           localStorage.removeItem('token');
         }
@@ -78,8 +82,8 @@ const AuthProvider = ({ children }) => {
       isAuthenticated, 
       setIsAuthenticated, 
       logout,
-      userRole,
-      setUserRole,
+      userType,
+      setUserType,
       officeId,
       user,
       setUser

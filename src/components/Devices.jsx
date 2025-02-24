@@ -47,10 +47,10 @@ const Devices = () => {
     office_id: '',
     status: ''
   });
-  const { user, userRole } = useContext(AuthContext);
+  const { user, userType } = useContext(AuthContext);
   
-  const isAdmin = userRole === 2 || userRole === 3;
-  const isStaff = userRole === 1;
+  const isAdmin = Number(userType) >= 2;
+  const isStaff = Number(userType) === 1;
   
   const handleDeviceAdded = (newDevice) => {
     fetchDevices();
@@ -66,7 +66,6 @@ const Devices = () => {
     });
     setIsEditDialogOpen(true);
   };
-
   const handleEditClose = () => {
     setEditDevice(null);
     setIsEditDialogOpen(false);
@@ -77,7 +76,6 @@ const Devices = () => {
       status: ''
     });
   };
-
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -88,7 +86,6 @@ const Devices = () => {
       setError('Error updating device: ' + (error.response?.data?.message || error.message));
     }
   };
-
   const fetchDevices = async () => {
     try {
       setLoading(true);
@@ -109,7 +106,6 @@ const Devices = () => {
       params.append('per_page', rowsPerPage);
 
       const response = await axios.get('/devices', { params });
-      
       if (response.data) {
         // Handle both array and paginated response formats
         const deviceData = Array.isArray(response.data) ? response.data : (response.data.data || []);
@@ -122,7 +118,6 @@ const Devices = () => {
         setTotalItems(0);
       }
     } catch (error) {
-      console.error('Error in fetchDevices:', error);
       setError('Error fetching devices: ' + (error.response?.data?.message || error.message));
       setDevices([]);
       setTotalItems(0);
@@ -130,7 +125,6 @@ const Devices = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     const fetchData = async () => {
       setPage(1); // Reset page when filters change
@@ -146,11 +140,9 @@ const Devices = () => {
     const interval = setInterval(fetchDevices, 30000);
     return () => clearInterval(interval);
   }, [filterStatus, filterOffice, isAdmin, isStaff]); // Add proper dependencies
-
   useEffect(() => {
     fetchDevices();
   }, [page]); // Only trigger on page changes
-  
   const fetchOffices = async () => {
     try {
       const response = await axios.get('/offices');
@@ -163,17 +155,6 @@ const Devices = () => {
     if (!issueDescription.trim()) {
       setError('Please enter an issue description');
       return;
-    }
-
-    try {
-      await axios.post(`/devices/${deviceId}/issues`, {
-        description: issueDescription
-      });
-      setSelectedDevice(null);
-      setIssueDescription('');
-      fetchDevices(); // Refresh the devices list
-    } catch (error) {
-      setError('Error logging issue: ' + (error.response?.data?.message || error.message));
     }
   };
   const getDeviceStatus = async (deviceId) => {

@@ -10,7 +10,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { setIsAuthenticated, setUserRole } = useContext(AuthContext); // Use context instead of prop
+  const { setIsAuthenticated, setUserType } = useContext(AuthContext); // Use context instead of prop
 
 
   const handleLogin = async (e) => {
@@ -20,9 +20,6 @@ function Login() {
     try {
       await axios.get('/sanctum/csrf-cookie');
       const response = await axios.post('/login', { email, password });
-
-      console.log('Login Response:', response.data);
-      console.log('Storing token:', response.data.access_token);
 
       localStorage.setItem('token', response.data.access_token);
       setIsAuthenticated(true);
@@ -41,7 +38,6 @@ function Login() {
       }
 
     } catch (error) {
-      console.error('Login Error:', error.response ? error.response.data : error.message);
       if (error.response) {
         if (error.response.status === 401) {
           setError('Incorrect password.');
