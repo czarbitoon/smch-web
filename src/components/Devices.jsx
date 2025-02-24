@@ -28,7 +28,9 @@ import axios from '../axiosInstance';
 
 const Devices = () => {
   const [devices, setDevices] = useState([]);
-
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(9);
+  const [totalItems, setTotalItems] = useState(0);
   const [issueDescription, setIssueDescription] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,6 @@ const Devices = () => {
   const fetchDevices = async () => {
     try {
       setLoading(true);
-      let url = '/devices';
       const params = new URLSearchParams();
       
       if (filterStatus !== 'all') {
@@ -103,29 +104,53 @@ const Devices = () => {
         params.append('office_id', filterOffice);
       }
 
-      console.log('Fetching devices with params:', Object.fromEntries(params));
-      const response = await axios.get(url, { params });
-      console.log('Received devices:', response.data);
+      // Add pagination parameters
+      params.append('page', page);
+      params.append('per_page', rowsPerPage);
+
+      const response = await axios.get('/devices', { params });
       
-      setDevices(response.data);
+      if (response.data) {
+        // Handle both array and paginated response formats
+        const deviceData = Array.isArray(response.data) ? response.data : (response.data.data || []);
+        const total = Array.isArray(response.data) ? deviceData.length : (response.data.total || deviceData.length);
+        
+        setDevices(deviceData);
+        setTotalItems(total);
+      } else {
+        setDevices([]);
+        setTotalItems(0);
+      }
     } catch (error) {
       console.error('Error in fetchDevices:', error);
       setError('Error fetching devices: ' + (error.response?.data?.message || error.message));
+      setDevices([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
-    fetchDevices();
-    if (isAdmin || isStaff) {
-      fetchOffices();
-    }
+    const fetchData = async () => {
+      setPage(1); // Reset page when filters change
+      await fetchDevices();
+      if (isAdmin || isStaff) {
+        await fetchOffices();
+      }
+    };
+    
+    fetchData();
+    
     // Refresh data every 30 seconds
     const interval = setInterval(fetchDevices, 30000);
     return () => clearInterval(interval);
-  }, [filterStatus, filterOffice, isAdmin, isStaff]); // Filter dependencies
-  
+  }, [filterStatus, filterOffice, isAdmin, isStaff]); // Add proper dependencies
 
+  useEffect(() => {
+    fetchDevices();
+  }, [page]); // Only trigger on page changes
+  
   const fetchOffices = async () => {
     try {
       const response = await axios.get('/offices');
@@ -244,70 +269,90 @@ const Devices = () => {
         )}
   {/* Devices Grid */}
         <Grid container spacing={3}>
-          {devices && devices.map(device => (
-            <Grid item xs={12} sm={6} md={4} key={device.id}>
-              <Paper elevation={3} sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  {device.name}
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                  <Chip 
-                    label={device.status} 
-                    color={
-                      device.status === 'active' ? 'success' :
-                      device.status === 'maintenance' ? 'warning' : 'error'
-                    }
-                    size="small"
-                  />
-                </Box>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  ID: {device.id}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Category: {device.category?.name || 'N/A'}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Type: {device.type?.name || 'N/A'}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Subcategory: {device.subcategory?.name || 'N/A'}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Office: {device.office?.name || 'N/A'}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                  {!selectedDevice && (
-                    <Button 
-                      variant="contained" 
+          {devices && devices.length > 0 ? (
+            devices.map(device => (
+              <Grid item xs={12} sm={6} md={4} key={device.id}>
+                <Paper elevation={3} sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    {device.name}
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <Chip 
+                      label={device.status} 
+                      color={
+                        device.status === 'active' ? 'success' :
+                        device.status === 'maintenance' ? 'warning' : 'error'
+                      }
                       size="small"
-                      onClick={() => setSelectedDevice(device)}
-                    >
-                      Log Issue
-                    </Button>
-                  )}
-                  <Button 
-                    variant="outlined" 
-                    size="small"
-                    onClick={() => getDeviceStatus(device.id)}
-                  >
-                    Refresh Status
-                  </Button>
-                  {(isAdmin || isStaff) && (
+                    />
+                  </Box>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    ID: {device.id}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Category: {device.category?.name || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Type: {device.type?.name || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Subcategory: {device.subcategory?.name || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Office: {device.office?.name || 'N/A'}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                    {!selectedDevice && (
+                      <Button 
+                        variant="contained" 
+                        size="small"
+                        onClick={() => setSelectedDevice(device)}
+                      >
+                        Log Issue
+                      </Button>
+                    )}
                     <Button 
                       variant="outlined" 
-                      color="secondary"
                       size="small"
-                      onClick={() => handleEditClick(device)}
+                      onClick={() => getDeviceStatus(device.id)}
                     >
-                      Edit
+                      Refresh Status
                     </Button>
-                  )}
-                </Box>
-              </Paper>
+                    {(isAdmin || isStaff) && (
+                      <Button 
+                        variant="outlined" 
+                        color="secondary"
+                        size="small"
+                        onClick={() => handleEditClick(device)}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                  </Box>
+                </Paper>
+              </Grid>
+            ))
+          ) : (
+            <Grid item xs={12}>
+              <Typography variant="h6" align="center">
+                No devices found
+              </Typography>
             </Grid>
-          ))}
+          )}
         </Grid>
 
+        {/* Pagination */}
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Pagination
+            count={Math.max(1, Math.ceil(totalItems / rowsPerPage))}
+            page={Math.min(page, Math.max(1, Math.ceil(totalItems / rowsPerPage)))}
+            onChange={(event, newPage) => setPage(newPage)}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
       </Box>
       
       <Snackbar
