@@ -9,8 +9,11 @@ import {
   ListItemText, 
   CircularProgress,
   Snackbar,
-  Paper
+  Paper,
+  Button,
+  Stack
 } from '@mui/material';
+import AddReport from './AddReport';
 import axios from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider';
 
@@ -18,6 +21,7 @@ const Reports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -53,25 +57,64 @@ const Reports = () => {
       </Box>
     );
   }
-
   return (
-    <Container maxWidth="lg">
-      <Typography variant="h4" component="h1" gutterBottom>
-        Reports
-      </Typography>
-      <Box sx={{ marginTop: 4 }}>
-        <List>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
+          Reports
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setIsAddModalOpen(true)}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 500,
+            px: 3,
+            py: 1,
+            borderRadius: 1.5
+          }}
+        >
+          Add Report
+        </Button>
+      </Stack>
+      <Box sx={{ mt: 2 }}>
+        <List sx={{ '& .MuiListItem-root': { px: 0, py: 1 } }}>
           {reports.map(report => (
             <ListItem key={report.id}>
-              <Paper elevation={2} sx={{ p: 2, width: '100%' }}>
+              <Paper 
+                elevation={1} 
+                sx={{ 
+                  p: 3, 
+                  width: '100%',
+                  borderRadius: 2,
+                  '&:hover': {
+                    boxShadow: 2
+                  }
+                }}
+              >
                 <ListItemText
-                  primary={report.title}
+                  primary={
+                    <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 500 }}>
+                      {report.title}
+                    </Typography>
+                  }
                   secondary={
-                    <>
-                      Generated on: {new Date(report.created_at).toLocaleDateString()}
-                      {report.user && ` | Reported by: ${report.user.name}`}
-                      {report.office && ` | Office: ${report.office.name}`}
-                    </>
+                    <Stack spacing={1} sx={{ mt: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Generated on: {new Date(report.created_at).toLocaleDateString()}
+                      </Typography>
+                      {report.user && (
+                        <Typography variant="body2" color="text.secondary">
+                          Reported by: {report.user.name}
+                        </Typography>
+                      )}
+                      {report.office && (
+                        <Typography variant="body2" color="text.secondary">
+                          Office: {report.office.name}
+                        </Typography>
+                      )}
+                    </Stack>
                   }
                 />
               </Paper>
@@ -79,12 +122,13 @@ const Reports = () => {
           ))}
         </List>
       </Box>
-
-      <Snackbar
-        open={Boolean(error)}
-        autoHideDuration={6000}
-        onClose={() => setError('')}
-        message={error}
+      <AddReport
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => {
+          setIsAddModalOpen(false);
+          fetchReports();
+        }}
       />
     </Container>
   );

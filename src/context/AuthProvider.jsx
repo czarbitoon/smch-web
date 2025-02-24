@@ -9,6 +9,7 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [officeId, setOfficeId] = useState(null);
+  const [user, setUser] = useState(null);
 
   const logout = async () => { 
     setLoading(true);
@@ -17,6 +18,7 @@ const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
         setUserRole(null);  // Reset role on logout
+        setUser(null); // Reset user on logout
     } catch (error) {
         console.error('Logout failed:', error);
     } finally {
@@ -44,6 +46,7 @@ const AuthProvider = ({ children }) => {
           setIsAuthenticated(response.status === 200);
           setUserRole(response.data.role);
           setOfficeId(response.data.office_id);
+          setUser(response.data); // Store the full user object
         }
       } catch (error) {
         console.error('Session validation failed:', error);
@@ -51,6 +54,7 @@ const AuthProvider = ({ children }) => {
         if (isMounted) {
           setIsAuthenticated(false);
           setUserRole(null);
+          setUser(null);
           localStorage.removeItem('token');
         }
       } finally {
@@ -75,8 +79,10 @@ const AuthProvider = ({ children }) => {
       setIsAuthenticated, 
       logout,
       userRole,
-      setUserRole,  // Ensure this is included
-      officeId 
+      setUserRole,
+      officeId,
+      user,
+      setUser
     }}>
       {children}
     </AuthContext.Provider>

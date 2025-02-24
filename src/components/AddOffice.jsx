@@ -37,23 +37,45 @@ function AddOffice({ open, onClose, onSuccess }) {
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Office</DialogTitle>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2, p: 1 } }}>
+        <DialogTitle sx={{ pb: 2, typography: 'h5' }}>Add New Office</DialogTitle>
         <form onSubmit={handleAddOffice}>
-          <DialogContent>
-            <TextField
-              label="Office Name"
-              type="text"
-              fullWidth
-              margin="normal"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+          <DialogContent sx={{ py: 2 }}>
+            <Stack spacing={3}>
+              <TextField
+                label="Office Name"
+                type="text"
+                fullWidth
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+              />
+            </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button
+              onClick={handleClose}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 3
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 3,
+                borderRadius: 1.5
+              }}
+            >
               Add Office
             </Button>
           </DialogActions>
