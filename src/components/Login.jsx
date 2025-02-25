@@ -24,14 +24,14 @@ function Login() {
       localStorage.setItem('token', response.data.access_token);
       setIsAuthenticated(true);
       
-      // Set user role directly from the API response
-      const userRole = response.data.role;
-      setUserRole(userRole);
+      // Set user Type directly from the API response
+      const userType = response.data.Type;
+      setUserType(userType);
 
-      // Navigate to the appropriate dashboard based on numeric user role
-      if (userRole === 2 || userRole === 3) { // 2 for admin, 3 for superadmin
+      // Navigate to the appropriate dashboard based on numeric user Type
+      if (userType === 2 || userType === 3) { // 2 for admin, 3 for superadmin
         navigate('/admin/dashboard');
-      } else if (userRole === 1) { // 1 for staff
+      } else if (userType === 1) { // 1 for staff
         navigate('/staff/dashboard');
       } else { // 0 for regular user
         navigate('/user/dashboard');
