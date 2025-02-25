@@ -25,7 +25,6 @@ import AddIcon from '@mui/icons-material/Add';
 import AddDevice from './AddDevice';
 import { AuthContext } from '../context/AuthProvider';
 import axios from '../axiosInstance';
-
 const Devices = () => {
   const [devices, setDevices] = useState([]);
   const [page, setPage] = useState(1);
@@ -48,14 +47,12 @@ const Devices = () => {
     status: ''
   });
   const { user, userType } = useContext(AuthContext);
-  
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const isAdmin = Number(userType) >= 2;
   const isStaff = Number(userType) === 1;
-  
   const handleDeviceAdded = (newDevice) => {
     fetchDevices();
   };
-
   const handleEditClick = (device) => {
     setEditDevice(device);
     setEditFormData({
@@ -80,10 +77,19 @@ const Devices = () => {
     e.preventDefault();
     try {
       await axios.put(`/devices/${editDevice.id}`, editFormData);
+      setSnackbar({
+        open: true,
+        message: 'Device updated successfully',
+        severity: 'success'
+      });
       fetchDevices();
       handleEditClose();
     } catch (error) {
-      setError('Error updating device: ' + (error.response?.data?.message || error.message));
+      setSnackbar({
+        open: true,
+        message: 'Error updating device: ' + (error.response?.data?.message || error.message),
+        severity: 'error'
+      });
     }
   };
   const fetchDevices = async () => {
@@ -155,6 +161,30 @@ const Devices = () => {
     if (!issueDescription.trim()) {
       setError('Please enter an issue description');
       return;
+    }
+
+    try {
+      await axios.post('/reports', {
+        title: `Device Issue Report - Device ID: ${deviceId}`,
+        description: issueDescription,
+        device_id: deviceId,
+        status: 'pending'
+      });
+
+      setSnackbar({
+        open: true,
+        message: 'Report submitted successfully',
+        severity: 'success'
+      });
+      
+      // Clear the form and selected device
+      setIssueDescription('');
+      setSelectedDevice(null);
+      
+      // Refresh the devices list
+      fetchDevices();
+    } catch (error) {
+      setError('Error submitting report: ' + (error.response?.data?.message || error.message));
     }
   };
   const getDeviceStatus = async (deviceId) => {

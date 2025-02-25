@@ -1,59 +1,98 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box, TextField, Button, Stack } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box, TextField, Button, Stack, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { reportService } from '../services/api';
+import axios from '../axiosInstance';
 
 function AddReport({ open, onClose, onSuccess }) {
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [deviceId, setDeviceId] = useState('');
+  const [devices, setDevices] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    if (open) {
+      fetchDevices();
     }
-  };
+  }, [open]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    if (image) {
-      formData.append('image', image);
-    }
-
+  const fetchDevices = async () => {
     try {
-      const response = await reportService.addReport(formData);
-      setSnackbar({
-        open: true,
-        message: 'Report submitted successfully!',
-        severity: 'success'
-      });
-      onSuccess && onSuccess(response);
-      handleClose();
+      const response = await axios.get('/devices');
+      // Ensure we always set an array, even if the response is empty or malformed
+      setDevices(Array.isArray(response.data) ? response.data : (response.data?.data || []));
     } catch (error) {
+      console.error('Error fetching devices:', error);
+      setDevices([]); // Set empty array on error
       setSnackbar({
         open: true,
-        message: 'Error submitting report: ' + (error.response?.data?.message || error.message),
+        message: 'Error fetching devices: ' + (error.response?.data?.message || error.message),
         severity: 'error'
       });
     }
   };
 
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!deviceId) {
+      setSnackbar({
+        open: true,
+        message: 'Please select a device',
+        severity: 'error'
+      });
+      return;
+    }
+
+    try {
+      const selectedDevice = devices.find(d => d.id === deviceId);
+      const reportData = {
+        title: `Issue Report - ${selectedDevice?.name || 'Device'}`,
+        description,
+        device_id: deviceId,
+        status: 'pending'
+      };
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: 'Please log in to submit a report',
+          severity: 'error'
+        });
+        return;
+      }
+
+      // Set the authorization header for the reportService
+      const response = await axios.post('/reports', reportData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setSnackbar({
+        open: true,
+        message: 'Report submitted successfully!',
+        severity: 'success'
+      });
+      onSuccess && onSuccess(response.data);
+      handleClose();
+    } catch (error) {
+      const errorMessage = error.response?.data?.error === 'User not authenticated' 
+        ? 'Please log in to submit a report' 
+        : error.response?.data?.error || error.response?.data?.message || 'Error submitting report';
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: 'error'
+      });
+      console.error('Report submission error:', error.response?.data || error);
+    }
+  };
 
   const handleClose = () => {
-    setTitle('');
     setDescription('');
-    setImage(null);
-    setImagePreview(null);
+    setDeviceId('');
     onClose && onClose();
   };
 
@@ -75,59 +114,32 @@ function AddReport({ open, onClose, onSuccess }) {
         <form onSubmit={handleSubmit}>
           <DialogContent sx={{ py: 2 }}>
             <Stack spacing={3}>
-              <TextField
-                required
-                fullWidth
-                label="Report Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                variant="outlined"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
-              />
+              <FormControl fullWidth required variant="outlined" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}>
+                <InputLabel>Device</InputLabel>
+                <Select
+                  value={deviceId}
+                  label="Device"
+                  onChange={(e) => setDeviceId(e.target.value)}
+                >
+                  {devices.map((device) => (
+                    <MenuItem key={device.id} value={device.id}>
+                      {device.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 required
                 fullWidth
                 multiline
                 rows={4}
-                label="Description"
+                label="Describe the Issue"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 variant="outlined"
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                placeholder="Please provide details about the issue you're experiencing with this device"
               />
-              <Box sx={{ mt: 2 }}>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="report-image"
-                  type="file"
-                  onChange={handleImageChange}
-                />
-                <label htmlFor="report-image">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    sx={{
-                      borderRadius: 1.5,
-                      px: 3,
-                      py: 1,
-                      textTransform: 'none',
-                      fontWeight: 500
-                    }}
-                  >
-                    Upload Image
-                  </Button>
-                </label>
-                {imagePreview && (
-                  <Box sx={{ mt: 2, borderRadius: 2, overflow: 'hidden' }}>
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover' }}
-                    />
-                  </Box>
-                )}
-              </Box>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

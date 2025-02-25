@@ -11,24 +11,25 @@ export const userService = {
 
 // Device related API calls
 export const deviceService = {
-  getAllDevices: () => axios.get('/api/devices'),
-  addDevice: (data) => axios.post('/api/devices', data),
-  updateDevice: (id, data) => axios.put(`/api/devices/${id}`, data),
-  deleteDevice: (id) => axios.delete(`/api/devices/${id}`)
+  getAllDevices: () => axios.get('/devices'),
+  addDevice: (data) => axios.post('/devices', data),
+  updateDevice: (id, data) => axios.put(`/devices/${id}`, data),
+  deleteDevice: (id) => axios.delete(`/devices/${id}`)
 };
 
 // Office related API calls
 export const officeService = {
-  getAllOffices: () => axios.get('/api/offices'),
-  addOffice: (data) => axios.post('/api/offices', data),
-  updateOffice: (id, data) => axios.put(`/api/offices/${id}`, data),
-  deleteOffice: (id) => axios.delete(`/api/offices/${id}`)
+  getAllOffices: () => axios.get('/offices'),
+  addOffice: (data) => axios.post('/offices', data),
+  updateOffice: (id, data) => axios.put(`/offices/${id}`, data),
+  deleteOffice: (id) => axios.delete(`/offices/${id}`)
 };
 
 // Report related API calls
 export const reportService = {
-  getAllReports: () => axios.get('/api/reports'),
-  addReport: (data) => axios.post('/api/reports', data),
-  updateReport: (id, data) => axios.put(`/api/reports/${id}`, data),
-  deleteReport: (id) => axios.delete(`/api/reports/${id}`)
+  getAllReports: () => axios.get('/reports'),
+  addReport: (data) => axios.post('/reports', data),
+  updateReport: (id, data) => axios.put(`/reports/${id}`, data),
+  deleteReport: (id) => axios.delete(`/reports/${id}`),
+  resolveReport: (id) => axios.post(`/reports/${id}/resolve`)
 };

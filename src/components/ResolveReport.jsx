@@ -1,42 +1,60 @@
- // src\components\ResolveReport.jsx
+// src\components\ResolveReport.jsx
 
 import React, { useState, useContext } from 'react';
-import { Container, Typography, Button, Box, TextField } from '@mui/material';
-import axios from 'axios';
-import { AuthContext } from '../context/AuthProvider';
-
+import { Container, Typography, Box, TextField, Button, Snackbar, Alert } from '@mui/material';
+import { AuthContext } from '../context/AuthContext';
+import axiosInstance from '../axiosInstance';
 
 function ResolveReport() {
   const { user } = useContext(AuthContext);
   const [id, setId] = useState('');
   const [report, setReport] = useState({});
-
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const handleResolveReport = (e) => {
     e.preventDefault();
-    axios.post(`http://127.0.0.1:8000/api/reports/${id}/resolve`, {}, {
-      headers: {
-        Authorization: `Bearer ${user.token}`
-      }
-    })
-
+    if (!resolutionNotes.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Please provide resolution notes',
+        severity: 'error'
+      });
+      return;
+    }
+    axiosInstance.post(`/reports/${id}/resolve`, { resolution_notes: resolutionNotes })
       .then((response) => {
-        console.log(response.data);
-        alert('Report resolved successfully!');
+        setSnackbar({
+          open: true,
+          message: 'Report resolved successfully!',
+          severity: 'success'
+        });
+        setReport({ ...report, resolved_by: user.id });
       })
       .catch((error) => {
-        console.error(error);
+        console.error('Error resolving report:', error.response?.data || error);
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.message || 'Error resolving report',
+          severity: 'error'
+        });
       });
   };
 
   const handleGetReport = (e) => {
     e.preventDefault();
-    axios.get(`http://127.0.0.1:8000/api/reports/${id}`)
+    axiosInstance.get(`/reports/${id}`)
       .then((response) => {
         setReport(response.data);
+        setResolutionNotes('');
       })
       .catch((error) => {
-        console.error(error);
+        console.error('Error fetching report:', error.response?.data || error);
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.message || 'Error fetching report',
+          severity: 'error'
+        });
       });
   };
 
@@ -45,7 +63,7 @@ function ResolveReport() {
       <Typography variant="h4" component="h1" gutterBottom>
         Resolve Report
       </Typography>
-      <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <form onSubmit={handleGetReport}>
           <TextField
             label="Report ID"
@@ -60,7 +78,7 @@ function ResolveReport() {
             Get Report
           </Button>
         </form>
-        {report && (
+        {report.id && (
           <div>
             <Typography variant="h6" component="h2" gutterBottom>
               Report Details
@@ -74,20 +92,43 @@ function ResolveReport() {
             <Typography variant="body1" component="p" gutterBottom>
               Reported by: {report.user?.name || 'Unknown'}
             </Typography>
-            {report.resolved_by && (
+            {report.resolved_by ? (
               <Typography variant="body1" component="p" gutterBottom>
                 Resolved by: {report.resolved_by_user?.name || 'Unknown'}
               </Typography>
+            ) : (
+              <form onSubmit={handleResolveReport}>
+                <TextField
+                  label="Resolution Notes"
+                  multiline
+                  rows={4}
+                  fullWidth
+                  margin="normal"
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  required
+                />
+                <Button type="submit" variant="contained" color="primary">
+                  Resolve Report
+                </Button>
+              </form>
             )}
-            <form onSubmit={handleResolveReport}>
-
-              <Button type="submit" variant="contained" color="primary">
-                Resolve Report
-              </Button>
-            </form>
           </div>
         )}
       </Box>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

@@ -11,13 +11,13 @@ import {
   Button // eslint-disable-line no-unused-vars
 } from '@mui/material';
 
-import axios from 'axios';
+import axiosInstance from '../axiosInstance';
 
 function ViewReports() {
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/reports')
+    axiosInstance.get('/reports')
       .then((response) => {
         setReports(response.data);
       })
