@@ -97,36 +97,45 @@ const Devices = () => {
       setLoading(true);
       const params = new URLSearchParams();
       
-      if (filterStatus !== 'all') {
+      // Add filter parameters
+      if (filterStatus && filterStatus !== 'all') {
         params.append('status', filterStatus);
       }
       
+      // Handle office filtering based on user role
       if (user && !isAdmin && !isStaff && user.office_id) {
         params.append('office_id', user.office_id);
-      } else if (filterOffice !== 'all') {
+      } else if (filterOffice && filterOffice !== 'all') {
         params.append('office_id', filterOffice);
       }
-
+      
       // Add pagination parameters
-      params.append('page', page);
-      params.append('per_page', rowsPerPage);
-
+      params.append('page', Math.max(1, page));
+      params.append('per_page', Math.max(1, rowsPerPage));
+      
       const response = await axios.get('/devices', { params });
-      if (response.data) {
-        // Handle both array and paginated response formats
-        const deviceData = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        const total = Array.isArray(response.data) ? deviceData.length : (response.data.total || deviceData.length);
+      
+      if (response.data && response.data.success && response.data.data) {
+        // Extract data and pagination info from response
+        const deviceData = response.data.data.devices || [];
+        const pagination = response.data.data.pagination || {};
         
+        // Update state with the fetched data
         setDevices(deviceData);
-        setTotalItems(total);
+        setTotalItems(pagination.total || 0);
+        setPage(pagination.current_page || 1);
+        
+        // Clear any previous errors
+        setError('');
       } else {
-        setDevices([]);
-        setTotalItems(0);
+        throw new Error(response.data?.message || 'Invalid response format');
       }
     } catch (error) {
-      setError('Error fetching devices: ' + (error.response?.data?.message || error.message));
+      const errorMessage = error.response?.data?.message || error.message;
+      setError('Error fetching devices: ' + errorMessage);
       setDevices([]);
       setTotalItems(0);
+      console.error('[Devices] Fetch error:', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -355,9 +364,9 @@ const Devices = () => {
         {/* Pagination */}
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
           <Pagination
-            count={Math.max(1, Math.ceil(totalItems / rowsPerPage))}
-            page={Math.min(page, Math.max(1, Math.ceil(totalItems / rowsPerPage)))}
-            onChange={(event, newPage) => setPage(newPage)}
+            count={parseInt(Math.max(1, Math.ceil(totalItems / rowsPerPage))) || 1}
+            page={parseInt(Math.min(page, Math.max(1, Math.ceil(totalItems / rowsPerPage)))) || 1}
+            onChange={(event, newPage) => setPage(parseInt(newPage))}
             color="primary"
             size="large"
             showFirstButton

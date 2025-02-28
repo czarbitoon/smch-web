@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import { CContainer, CCard, CCardBody, CCardHeader, CButton, CAvatar, CRow, CCol, CSpinner, CWidgetStatsF } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilPeople, cilDevices, cilSpreadsheet, cilBuilding } from '@coreui/icons';
+import { Logo } from './Logo';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider';
@@ -79,13 +80,7 @@ function AdminDashboard() {
           {user && (
             <CRow className="mb-4">
               <CCol xs={12} className="text-center">
-                <CAvatar
-                  src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://ui-avatars.com/api/?name=User&size=128'}
-                  size="lg"
-                  onError={(e) => { 
-                    e.target.src = '/default-avatar.png';
-                  }}
-                />
+                <Logo />
                 <h5>{user.name}</h5>
                 <p>{user.email}</p>
               </CCol>
