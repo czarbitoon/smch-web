@@ -81,13 +81,24 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const fetchOffices = async () => {
     try {
       const response = await axios.get('/offices');
-      setOffices(response.data);
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        setOffices(response.data.data);
+      } else {
+        console.error('[AddDevice] Invalid offices data format:', response.data);
+        setOffices([]);
+        setSnackbar({
+          open: true,
+          message: 'Error: Invalid office data received from server',
+          severity: 'error'
+        });
+      }
     } catch (error) {
       setSnackbar({
         open: true,
         message: 'Error fetching offices: ' + (error.response?.data?.message || error.message),
         severity: 'error'
       });
+      setOffices([]);
     }
   };
 

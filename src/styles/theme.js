@@ -4,6 +4,10 @@ import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
+    background: {
+      default: '#ffffff',
+      paper: '#ffffff'
+    },
     primary: {
       main: '#1976d2',
       light: '#42a5f5',
@@ -33,6 +37,92 @@ export const theme = createTheme({
       main: '#2e7d32',
       light: '#4caf50',
       dark: '#1b5e20'
+    }
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
+        }
+      }
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          color: '#213547',
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
+        }
+      }
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#ffffff'
+        }
+      }
+    },
+    MuiList: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff'
+        }
+      }
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          '&:hover': {
+            backgroundColor: '#f5f5f5'
+          }
+        }
+      }
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff'
+        }
+      }
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#ffffff'
+        }
+      }
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff'
+        }
+      }
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#f5f5f5'
+        }
+      }
+    },
+    MuiTableBody: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff'
+        }
+      }
     }
   },
   typography: {

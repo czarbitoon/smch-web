@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Container, Typography, Box, List, ListItem, ListItemText, Button, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosInstance';
 
 const Office = () => {
   const [offices, setOffices] = useState([]);
@@ -13,21 +13,41 @@ const Office = () => {
 
   useEffect(() => {
     // Fetch offices from the API
-    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/offices`)
+    axios.get('/offices')
       .then(response => {
-        setOffices(response.data);
+        const responseData = response.data;
+        console.log('[Office] API Response:', responseData); // Debug log
+        
+        if (responseData?.success && responseData?.data?.offices) {
+          // Handle the specific response structure where offices are under data.offices
+          console.log('[Office] Using offices data:', responseData.data.offices);
+          setOffices(responseData.data.offices);
+        } else if (responseData?.data?.data) {
+          // Handle paginated response
+          console.log('[Office] Using paginated data:', responseData.data.data);
+          setOffices(responseData.data.data);
+        } else if (Array.isArray(responseData)) {
+          // Handle direct array response
+          console.log('[Office] Using direct array:', responseData);
+          setOffices(responseData);
+        } else {
+          console.error('[Office] Invalid data format received:', responseData);
+          setOffices([]);
+          setError('Invalid data format received from server');
+        }
         setLoading(false);
       })
       .catch(error => {
         console.error('Error fetching offices:', error);
         setError('Failed to fetch offices. Please try again later.');
         setLoading(false);
+        setOffices([]); // Ensure offices is an empty array on error
       });
   }, []);
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/offices/${id}`);
+      await axios.delete(`/offices/${id}`);
       setOffices(offices.filter(office => office.id !== id));
       setSnackbar({ open: true, message: 'Office deleted successfully', severity: 'success' });
     } catch (error) {
@@ -54,7 +74,7 @@ const Office = () => {
     if (!selectedOffice || !editedName.trim()) return;
 
     try {
-      const response = await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/offices/${selectedOffice.id}`, {
+      await axios.put(`/offices/${selectedOffice.id}`, {
         name: editedName.trim()
       });
 

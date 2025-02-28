@@ -161,8 +161,20 @@ const Devices = () => {
   const fetchOffices = async () => {
     try {
       const response = await axios.get('/offices');
-      setOffices(response.data);
+      if (response.data?.success && Array.isArray(response.data?.data)) {
+        setOffices(response.data.data);
+      } else if (response.data?.data?.offices) {
+        setOffices(response.data.data.offices);
+      } else if (Array.isArray(response.data)) {
+        setOffices(response.data);
+      } else {
+        console.error('[Devices] Invalid offices data format:', response.data);
+        setOffices([]);
+        setError('Invalid offices data format');
+      }
     } catch (error) {
+      console.error('[Devices] Error fetching offices:', error);
+      setOffices([]);
       setError('Error fetching offices: ' + (error.response?.data?.message || error.message));
     }
   };
@@ -210,20 +222,19 @@ const Devices = () => {
   };
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh" sx={{ bgcolor: 'white' }}>
         <CircularProgress />
       </Box>
     );
   }
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ marginY: 4, position: 'relative' }}>
+    <Container maxWidth="lg" sx={{ bgcolor: 'white', py: 4 }}>
+      <Box sx={{ position: 'relative', bgcolor: 'white' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Devices Management
         </Typography>
-  {/* Filters */}
-        <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-          <FormControl sx={{ minWidth: 200 }}>
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, bgcolor: 'white' }}>
+          <FormControl sx={{ minWidth: 200, bgcolor: 'white' }}>
             <InputLabel>Filter by Status</InputLabel>
             <Select
               value={filterStatus}
@@ -238,7 +249,7 @@ const Devices = () => {
           </FormControl>
           
           {(isAdmin || isStaff) && (
-            <FormControl sx={{ minWidth: 200 }}>
+            <FormControl sx={{ minWidth: 200, bgcolor: 'white' }}>
               <InputLabel>Filter by Office</InputLabel>
               <Select
                 value={filterOffice}

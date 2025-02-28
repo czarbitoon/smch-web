@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background-color: #ffffff;
 }
 
 .logo {
@@ -35,8 +36,22 @@
 
 .card {
   padding: 2em;
+  background-color: #ffffff;
 }
 
 .read-the-docs {
   color: #888;
+}
+
+/* Additional styles for consistent white background */
+.container {
+  background-color: #ffffff;
+}
+
+.navbar {
+  background-color: #ffffff;
+}
+
+.content {
+  background-color: #ffffff;
 }
