@@ -1,21 +1,30 @@
 // ResolveDevice.jsx
 
 import React, { useState } from 'react';
-import { Container, Typography, Button, Box, TextField } from '@mui/material';
-import axios from 'axios';
+import { Container, Typography, Button, Box, TextField, Snackbar, Alert } from '@mui/material';
+import axiosInstance from '../axiosInstance';
 
 function ResolveDevice() {
   const [id, setId] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const handleResolveDevice = (e) => {
     e.preventDefault();
-    axios.post(`http://127.0.0.1:8000/api/devices/${id}/resolve`)
+    axiosInstance.post(`/devices/${id}/resolve`)
       .then((response) => {
-        console.log(response.data);
-        alert('Device resolved successfully!');
+        setSnackbar({
+          open: true,
+          message: 'Device resolved successfully!',
+          severity: 'success'
+        });
       })
       .catch((error) => {
-        console.error(error);
+        console.error('Error resolving device:', error.response?.data || error);
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.message || 'Error resolving device',
+          severity: 'error'
+        });
       });
   };
 
@@ -24,7 +33,7 @@ function ResolveDevice() {
       <Typography variant="h4" component="h1" gutterBottom>
         Resolve Device
       </Typography>
-      <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <form onSubmit={handleResolveDevice}>
           <TextField
             label="Device ID"
@@ -40,6 +49,19 @@ function ResolveDevice() {
           </Button>
         </form>
       </Box>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
