@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Container, Typography, Box, List, ListItem, ListItemText, Button, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar } from '@mui/material';
+import { Container, Typography, Box, Grid, Button, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Paper } from '@mui/material';
 import axios from '../axiosInstance';
 
 const Office = () => {
@@ -111,33 +111,69 @@ const Office = () => {
   }
 
   return (
-    <Container>
+    <Container maxWidth="lg">
       <Typography variant="h4" component="h1" gutterBottom>
         Offices
       </Typography>
-      <Box>
+      <Box sx={{ mt: 3 }}>
         {offices.length === 0 ? (
           <Typography variant="body1" mt={2}>
             No offices found.
           </Typography>
         ) : (
-          <List>
+          <Grid container spacing={3}>
             {offices.map(office => (
-              <ListItem key={office.id}>
-                <ListItemText primary={office.name} secondary={`ID: ${office.id}`} />
-                <Button onClick={() => handleEditClick(office)}>Edit</Button>
-                <Button onClick={() => handleDelete(office.id)} color="error">Delete</Button>
-              </ListItem>
+              <Grid item xs={12} sm={6} md={4} key={office.id}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <Typography variant="h6" component="h2" gutterBottom>
+                    {office.name}
+                  </Typography>
+                  <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleEditClick(office)}
+                      sx={{ flex: 1 }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => handleDelete(office.id)}
+                      sx={{ flex: 1 }}
+                    >
+                      Delete
+                    </Button>
+                  </Box>
+                </Paper>
+              </Grid>
             ))}
-          </List>
+          </Grid>
         )}
       </Box>
 
       {/* Edit Modal */}
-      <Dialog open={editModalOpen} onClose={handleEditClose}>
+      <Dialog 
+        open={editModalOpen} 
+        onClose={handleEditClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+      >
         <form onSubmit={handleEditSubmit}>
-          <DialogTitle>Edit Office</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ pb: 2, typography: 'h5' }}>Edit Office</DialogTitle>
+          <DialogContent sx={{ py: 2 }}>
             <TextField
               autoFocus
               margin="dense"
@@ -147,11 +183,32 @@ const Office = () => {
               value={editedName}
               onChange={(e) => setEditedName(e.target.value)}
               required
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
             />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleEditClose}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button 
+              onClick={handleEditClose}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 3
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="primary"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                px: 3,
+                borderRadius: 1.5
+              }}
+            >
               Save Changes
             </Button>
           </DialogActions>

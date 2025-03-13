@@ -56,10 +56,21 @@ function Login() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ backgroundColor: '#f5f5f5', padding: 4, borderRadius: 2, boxShadow: 3 }}>
-      <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Login
+    <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <Box
+        sx={{
+          backgroundColor: '#ffffff',
+          padding: 4,
+          borderRadius: 2,
+          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+      <Box sx={{ width: '100%', maxWidth: 400 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, textAlign: 'center', color: '#212121', fontWeight: 600 }}>
+          Welcome Back
         </Typography>
         <form onSubmit={handleLogin}>
           <TextField
@@ -70,6 +81,13 @@ function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            variant="outlined"
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px'
+              }
+            }}
           />
           <TextField
             label="Password"
@@ -79,8 +97,28 @@ function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            variant="outlined"
+            sx={{
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px'
+              }
+            }}
           />
-          <Button type="submit" variant="contained" color="primary" disabled={loading} sx={{ marginTop: 2 }}>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            disabled={loading} 
+            fullWidth 
+            sx={{ 
+              py: 1.5,
+              mb: 2,
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontSize: '1rem'
+            }}
+          >
             {loading ? <CircularProgress size={24} /> : 'Login'}
           </Button>
         </form>

@@ -42,8 +42,10 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const fetchCategories = async () => {
     try {
       const response = await axios.get('/device-categories');
+      console.log('[AddDevice] Categories API Response:', response.data);
       setCategories(response.data);
     } catch (error) {
+      console.error('[AddDevice] Error fetching categories:', error.response?.data || error);
       setSnackbar({
         open: true,
         message: 'Error fetching categories: ' + (error.response?.data?.message || error.message),
@@ -54,9 +56,12 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
 
   const fetchTypes = async (categoryId) => {
     try {
+      console.log('[AddDevice] Fetching types for category:', categoryId);
       const response = await axios.get(`/device-categories/${categoryId}/types`);
+      console.log('[AddDevice] Types API Response:', response.data);
       setTypes(response.data);
     } catch (error) {
+      console.error('[AddDevice] Error fetching types:', error.response?.data || error);
       setSnackbar({
         open: true,
         message: 'Error fetching types: ' + (error.response?.data?.message || error.message),
@@ -67,9 +72,12 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
 
   const fetchSubcategories = async (typeId) => {
     try {
+      console.log('[AddDevice] Fetching subcategories for type:', typeId);
       const response = await axios.get(`/device-types/${typeId}/subcategories`);
+      console.log('[AddDevice] Subcategories API Response:', response.data);
       setSubcategories(response.data);
     } catch (error) {
+      console.error('[AddDevice] Error fetching subcategories:', error.response?.data || error);
       setSnackbar({
         open: true,
         message: 'Error fetching subcategories: ' + (error.response?.data?.message || error.message),
@@ -83,6 +91,10 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
       const response = await axios.get('/offices');
       if (response.data?.success && Array.isArray(response.data.data)) {
         setOffices(response.data.data);
+      } else if (response.data?.data?.offices) {
+        setOffices(response.data.data.offices);
+      } else if (Array.isArray(response.data)) {
+        setOffices(response.data);
       } else {
         console.error('[AddDevice] Invalid offices data format:', response.data);
         setOffices([]);

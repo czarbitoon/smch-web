@@ -113,11 +113,16 @@ const Devices = () => {
       params.append('page', Math.max(1, page));
       params.append('per_page', Math.max(1, rowsPerPage));
       
+      console.log('[Devices] Fetching devices with params:', Object.fromEntries(params));
       const response = await axios.get('/devices', { params });
+      console.log('[Devices] API Response:', response.data);
       
       if (response.data && response.data.success && response.data.data) {
         // Extract data and pagination info from response
         const deviceData = response.data.data.devices || [];
+        console.log('[Devices] Device data:', deviceData);
+        console.log('[Devices] First device details:', deviceData[0]);
+        
         const pagination = response.data.data.pagination || {};
         
         // Update state with the fetched data
@@ -132,10 +137,10 @@ const Devices = () => {
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
+      console.error('[Devices] Fetch error:', errorMessage);
       setError('Error fetching devices: ' + errorMessage);
       setDevices([]);
       setTotalItems(0);
-      console.error('[Devices] Fetch error:', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -321,10 +326,10 @@ const Devices = () => {
                     ID: {device.id}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Category: {device.category?.name || 'N/A'}
+                    Category: {device.subcategory?.device_type?.device_category?.name || device.category?.name || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Type: {device.type?.name || 'N/A'}
+                    Type: {device.subcategory?.device_type?.name || device.type?.name || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
                     Subcategory: {device.subcategory?.name || 'N/A'}
