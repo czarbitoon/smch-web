@@ -68,7 +68,7 @@ function Login() {
           alignItems: 'center'
         }}
       >
-      <Box sx={{ width: '100%', maxWidth: 400 }}>
+      <Box sx={{ width: '100%', maxWidth: 400 }}>        
         <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, textAlign: 'center', color: '#212121', fontWeight: 600 }}>
           Welcome Back
         </Typography>
@@ -139,6 +139,7 @@ function Login() {
           Register
         </Button>
       </Box>
+    </Box>
     </Container>
   );
 }
