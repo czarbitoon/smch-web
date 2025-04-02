@@ -55,7 +55,7 @@ const Reports = () => {
         params.append('office_id', user.office_id);
       }
 
-      const response = await axios.get('/reports', { params });
+      const response = await axios.get('/api/reports', { params });
       setReports(response.data);
     } catch (error) {
       setError('Error fetching reports: ' + (error.response?.data?.message || error.message));
@@ -82,7 +82,7 @@ const Reports = () => {
         return;
       }
 
-      await axios.post(`/reports/${selectedReport.id}/resolve`, {
+      await axios.post(`/api/reports/${selectedReport.id}/resolve`, {
         resolution_notes: resolutionNotes
       });
       

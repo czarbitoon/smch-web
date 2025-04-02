@@ -12,7 +12,7 @@ const Profile = () => {
 
   useEffect(() => {
     // Fetch user profile from the Laravel API
-    axios.get('http://127.0.0.1:8000/api/profile', {
+    axios.get('/api/profile', {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },

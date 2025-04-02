@@ -23,7 +23,7 @@ function UserDashboard() {
 
       try {
         // First get the profile to determine the role
-        const profileRes = await axios.get('/profile');
+        const profileRes = await axios.get('/api/profile');
         
         // Ensure we have valid user data and handle nested structures
         if (!profileRes.data) {
@@ -47,7 +47,7 @@ function UserDashboard() {
 
         setUser(userData);
         // Then get the stats for regular user
-        const statsRes = await axios.get('/user/stats');
+        const statsRes = await axios.get('/api/user/stats');
         setStats(statsRes.data);
         setLoading(false);
       } catch (error) {
@@ -66,7 +66,7 @@ function UserDashboard() {
 
   const handleLogout = async () => {
     try {
-      await axios.post('/logout'); // Call the logout API
+      await axios.post('/api/logout'); // Call the logout API
       localStorage.removeItem('token'); // Remove token from localStorage
       navigate('/login'); // Redirect to login
     } catch (error) {

@@ -11,7 +11,7 @@ function AddOffice({ open, onClose, onSuccess }) {
   const handleAddOffice = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/offices', {
+      const response = await axios.post('/api/offices', {
         name: name,
       });
       setSnackbar({

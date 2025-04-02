@@ -4,8 +4,8 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: #212121;
-  background-color: #f8f9fa;
+  color: var(--text-primary);
+  background-color: var(--background-default);
 
   font-synsmch: none;
   text-rendering: optimizeLegibility;
@@ -27,7 +27,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f8f9fa !important;
+  background-color: var(--background-default) !important;
+  transition: background-color 0.2s ease-in-out;
 }
 
 h1 {
@@ -42,8 +43,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #2196f3;
-  color: #ffffff;
+  background-color: var(--primary-main);
+  color: var(--primary-contrast-text);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }

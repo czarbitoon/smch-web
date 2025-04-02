@@ -23,8 +23,8 @@ function StaffDashboard() {
       setLoading(true);
       try {
         const [profileRes, statsRes] = await Promise.all([
-          axios.get('/profile'),
-          axios.get('/staff/stats')
+          axios.get('/api/profile'),
+          axios.get('/api/staff/stats')
         ]);
         setUser(profileRes.data.user);
         setStats(statsRes.data);
@@ -43,7 +43,7 @@ function StaffDashboard() {
 
   const handleLogout = async () => {
     try {
-      await axios.post('/logout'); // Call the logout API
+      await axios.post('/api/logout'); // Call the logout API
       localStorage.removeItem('token'); // Remove token from localStorage
       navigate('/login'); // Redirect to login
     } catch (error) {
@@ -63,7 +63,7 @@ function StaffDashboard() {
           <Paper elevation={3} sx={{ padding: 3, marginBottom: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
               <Avatar
-                src={user.profile_picture ? `http://127.0.0.1:8000/storage/${user.profile_picture}` : 'https://via.placeholder.com/150'}
+                src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://via.placeholder.com/150'}
                 sx={{ width: 100, height: 100 }}
               />
               <Box>

@@ -3,34 +3,34 @@
 // API endpoints
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/login',
-    REGISTER: '/register',
-    LOGOUT: '/logout',
-    PROFILE: '/profile'
+    LOGIN: '/api/login',
+    REGISTER: '/api/register',
+    LOGOUT: '/api/logout',
+    PROFILE: '/api/profile'
   },
   DEVICES: {
-    BASE: '/devices',
-    GET_ALL: '/devices',
-    GET_ONE: (id) => `/devices/${id}`,
-    CREATE: '/devices',
-    UPDATE: (id) => `/devices/${id}`,
-    DELETE: (id) => `/devices/${id}`
+    BASE: '/api/devices',
+    GET_ALL: '/api/devices',
+    GET_ONE: (id) => `/api/devices/${id}`,
+    CREATE: '/api/devices',
+    UPDATE: (id) => `/api/devices/${id}`,
+    DELETE: (id) => `/api/devices/${id}`
   },
   OFFICES: {
-    BASE: '/offices',
-    GET_ALL: '/offices',
-    GET_ONE: (id) => `/offices/${id}`,
-    CREATE: '/offices',
-    UPDATE: (id) => `/offices/${id}`,
-    DELETE: (id) => `/offices/${id}`
+    BASE: '/api/offices',
+    GET_ALL: '/api/offices',
+    GET_ONE: (id) => `/api/offices/${id}`,
+    CREATE: '/api/offices',
+    UPDATE: (id) => `/api/offices/${id}`,
+    DELETE: (id) => `/api/offices/${id}`
   },
   REPORTS: {
-    BASE: '/reports',
-    GET_ALL: '/reports',
-    GET_ONE: (id) => `/reports/${id}`,
-    CREATE: '/reports',
-    UPDATE: (id) => `/reports/${id}`,
-    DELETE: (id) => `/reports/${id}`
+    BASE: '/api/reports',
+    GET_ALL: '/api/reports',
+    GET_ONE: (id) => `/api/reports/${id}`,
+    CREATE: '/api/reports',
+    UPDATE: (id) => `/api/reports/${id}`,
+    DELETE: (id) => `/api/reports/${id}`
   }
 };
 

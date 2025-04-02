@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box, TextField, CircularProgress, Snackbar } from '@mui/material';
 import axios from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider'; // Import AuthContext
+import { userService } from '../services/api'; // Import userService
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -16,10 +17,11 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    setError('');
+    
     try {
-      await axios.get('/sanctum/csrf-cookie');
-      const response = await axios.post('/login', { email, password });
+      // Use userService instead of direct axios call
+      const response = await userService.login({ email, password });
 
       localStorage.setItem('token', response.data.access_token);
       setIsAuthenticated(true);
@@ -42,12 +44,16 @@ function Login() {
         if (error.response.status === 401) {
           setError('Incorrect password.');
         } else if (error.response.status === 404) {
-          setError('Email does not exist.');
+          setError('Email not found. Please check your email or register.');
+        } else if (error.response.data?.message) {
+          setError(error.response.data.message);
         } else {
-          setError('Login failed. Please check your credentials and try again.');
+          setError('Login failed. Please try again.');
         }
+      } else if (error.message) {
+        setError(error.message);
       } else {
-        setError('Login failed. Please check your credentials and try again.');
+        setError('Login failed. Please try again.');
       }
 
     } finally {

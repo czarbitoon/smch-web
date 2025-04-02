@@ -41,7 +41,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('/device-categories');
+      const response = await axios.get('/api/device-categories');
       console.log('[AddDevice] Categories API Response:', response.data);
       setCategories(response.data);
     } catch (error) {
@@ -57,7 +57,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const fetchTypes = async (categoryId) => {
     try {
       console.log('[AddDevice] Fetching types for category:', categoryId);
-      const response = await axios.get(`/device-categories/${categoryId}/types`);
+      const response = await axios.get(`/api/device-categories/${categoryId}/types`);
       console.log('[AddDevice] Types API Response:', response.data);
       setTypes(response.data);
     } catch (error) {
@@ -73,7 +73,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const fetchSubcategories = async (typeId) => {
     try {
       console.log('[AddDevice] Fetching subcategories for type:', typeId);
-      const response = await axios.get(`/device-types/${typeId}/subcategories`);
+      const response = await axios.get(`/api/device-types/${typeId}/subcategories`);
       console.log('[AddDevice] Subcategories API Response:', response.data);
       setSubcategories(response.data);
     } catch (error) {
@@ -88,7 +88,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
 
   const fetchOffices = async () => {
     try {
-      const response = await axios.get('/offices');
+      const response = await axios.get('/api/offices');
       if (response.data?.success && Array.isArray(response.data.data)) {
         setOffices(response.data.data);
       } else if (response.data?.data?.offices) {
@@ -117,7 +117,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const handleAddDevice = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/devices', {
+      const response = await axios.post('/api/devices', {
         name: name,
         description: description,
         office_id: officeId,

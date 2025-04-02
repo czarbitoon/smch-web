@@ -1,0 +1,30 @@
+/* theme-init.css - Prevent theme flash */
+:root {
+  /* Set initial theme colors to match our theme.js */
+  --background-default: #f8f9fa;
+  --background-paper: #ffffff;
+  --primary-main: #2196f3;
+  --primary-light: #64b5f6;
+  --primary-dark: #1976d2;
+  --primary-contrast-text: #ffffff;
+  --secondary-main: #3f51b5;
+  --secondary-light: #7986cb;
+  --secondary-dark: #303f9f;
+  --secondary-contrast-text: #ffffff;
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #9e9e9e;
+}
+
+/* Apply background color immediately to prevent flash */
+html, body {
+  background-color: var(--background-default);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Ensure the root element fills the viewport */
+#root {
+  min-height: 100vh;
+  background-color: var(--background-default);
+}

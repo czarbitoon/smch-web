@@ -5,6 +5,24 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React</title>
+    <style>
+      /* Inline critical CSS to prevent flash */
+      :root {
+        --background-default: #f8f9fa;
+        --background-paper: #ffffff;
+        --primary-main: #2196f3;
+        --text-primary: #212121;
+      }
+      body {
+        background-color: var(--background-default);
+        color: var(--text-primary);
+        margin: 0;
+      }
+      #root {
+        background-color: var(--background-default);
+        min-height: 100vh;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

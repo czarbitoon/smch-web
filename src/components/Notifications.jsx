@@ -12,7 +12,7 @@ const Notifications = () => {
     const fetchNotifications = async () => {
       setLoading(true); // Set loading to true
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/notifications`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/notifications`);
         setNotifications(response.data);
       } catch (error) {
         setError('Error fetching notifications'); // Set error message

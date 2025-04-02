@@ -2,9 +2,14 @@ import axios from 'axios';
 
 // Create an Axios instance
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+  },
   withCredentials: true, // Include cookies for CSRF protection
-  timeout: 10000, // Set timeout to 10 seconds
+  timeout: 30000, // Set timeout to 30 seconds
 });
 
 // Add a response interceptor for error handling

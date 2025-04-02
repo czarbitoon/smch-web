@@ -13,7 +13,7 @@ const Office = () => {
 
   useEffect(() => {
     // Fetch offices from the API
-    axios.get('/offices')
+    axios.get('/api/offices')
       .then(response => {
         const responseData = response.data;
         console.log('[Office] API Response:', responseData); // Debug log

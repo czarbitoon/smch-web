@@ -17,7 +17,7 @@ function AddReport({ open, onClose, onSuccess }) {
 
   const fetchDevices = async () => {
     try {
-      const response = await axios.get('/devices');
+      const response = await axios.get('/api/devices');
       // Ensure we always set an array, even if the response is empty or malformed
       setDevices(Array.isArray(response.data) ? response.data : (response.data?.data || []));
     } catch (error) {

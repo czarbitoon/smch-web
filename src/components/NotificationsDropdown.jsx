@@ -27,7 +27,7 @@ const NotificationsDropdown = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get('/notifications');
+      const response = await axios.get('/api/notifications');
       setNotifications(response.data);
       setUnreadCount(response.data.filter(notif => !notif.read).length);
     } catch (error) {
@@ -38,7 +38,7 @@ const NotificationsDropdown = () => {
   const handleNotificationClick = async (notification) => {
     try {
       // Mark notification as read
-      await axios.post(`/notifications/${notification.id}/read`);
+      await axios.post(`/api/notifications/${notification.id}/read`);
       // Update local state
       setNotifications(prevNotifications =>
         prevNotifications.map(n =>

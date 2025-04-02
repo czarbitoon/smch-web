@@ -2,6 +2,21 @@
 
 import { createTheme } from '@mui/material/styles';
 
+// Apply CSS variables to match our theme
+document.documentElement.style.setProperty('--background-default', '#f8f9fa');
+document.documentElement.style.setProperty('--background-paper', '#ffffff');
+document.documentElement.style.setProperty('--primary-main', '#2196f3');
+document.documentElement.style.setProperty('--primary-light', '#64b5f6');
+document.documentElement.style.setProperty('--primary-dark', '#1976d2');
+document.documentElement.style.setProperty('--primary-contrast-text', '#ffffff');
+document.documentElement.style.setProperty('--secondary-main', '#3f51b5');
+document.documentElement.style.setProperty('--secondary-light', '#7986cb');
+document.documentElement.style.setProperty('--secondary-dark', '#303f9f');
+document.documentElement.style.setProperty('--secondary-contrast-text', '#ffffff');
+document.documentElement.style.setProperty('--text-primary', '#212121');
+document.documentElement.style.setProperty('--text-secondary', '#757575');
+document.documentElement.style.setProperty('--text-disabled', '#9e9e9e');
+
 export const theme = createTheme({
   palette: {
     background: {
@@ -172,11 +187,6 @@ export const theme = createTheme({
           }
         }
       }
-    }
-        paper: {
-          backgroundColor: '#ffffff'
-        }
-      }
     },
     MuiTableContainer: {
       styleOverrides: {
@@ -198,33 +208,6 @@ export const theme = createTheme({
           backgroundColor: '#ffffff'
         }
       }
-    }
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontSize: '2.5rem',
-      fontWeight: 500
-    },
-    h2: {
-      fontSize: '2rem',
-      fontWeight: 500
-    },
-    h3: {
-      fontSize: '1.75rem',
-      fontWeight: 500
-    },
-    h4: {
-      fontSize: '1.5rem',
-      fontWeight: 500
-    },
-    h5: {
-      fontSize: '1.25rem',
-      fontWeight: 500
-    },
-    h6: {
-      fontSize: '1rem',
-      fontWeight: 500
     }
   },
   shape: {

@@ -41,7 +41,7 @@ const AuthProvider = ({ children }) => {
       }
 
       try {
-        const response = await axios.get('/profile');
+        const response = await axios.get('/api/profile');
 
         if (isMounted) {
           setIsAuthenticated(response.status === 200);

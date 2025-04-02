@@ -12,7 +12,7 @@ const Feedback = () => {
     const fetchFeedback = async () => {
       setLoading(true); // Set loading to true
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/feedback`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/feedback`);
         setFeedbackList(response.data);
       } catch (error) {
         setError('Error fetching feedback'); // Set error message

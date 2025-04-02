@@ -30,8 +30,8 @@ function AdminDashboard() {
       
       try {
         const [profileRes, statsRes] = await Promise.all([
-          axios.get('/profile'),
-          axios.get('/admin/stats')
+          axios.get('/api/profile'),
+          axios.get('/api/admin/stats')
         ]);
         if (isMounted) {
           setUser(profileRes.data.user);

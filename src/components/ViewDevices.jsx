@@ -12,7 +12,7 @@ const ViewDevices = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await axios.get('/office-devices');
+        const response = await axios.get('/api/office-devices');
         setDevices(response.data);
       } catch (error) {
         console.error('Error fetching devices:', error);

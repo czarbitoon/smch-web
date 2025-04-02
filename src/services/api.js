@@ -1,35 +1,37 @@
 // src/services/api.js
 
 import axios from '../axiosInstance';
+import { API_ENDPOINTS } from '../utils/constants';
 
 // User related API calls
 export const userService = {
-  getProfile: () => axios.get('/profile'),
-  updateProfile: (data) => axios.put('/profile', data),
-  logout: () => axios.post('/logout')
+  login: (credentials) => axios.post(API_ENDPOINTS.AUTH.LOGIN, credentials),
+  getProfile: () => axios.get(API_ENDPOINTS.AUTH.PROFILE),
+  updateProfile: (data) => axios.put(API_ENDPOINTS.AUTH.PROFILE, data),
+  logout: () => axios.post(API_ENDPOINTS.AUTH.LOGOUT)
 };
 
 // Device related API calls
 export const deviceService = {
-  getAllDevices: () => axios.get('/devices'),
-  addDevice: (data) => axios.post('/devices', data),
-  updateDevice: (id, data) => axios.put(`/devices/${id}`, data),
-  deleteDevice: (id) => axios.delete(`/devices/${id}`)
+  getAllDevices: () => axios.get(API_ENDPOINTS.DEVICES.GET_ALL),
+  addDevice: (data) => axios.post(API_ENDPOINTS.DEVICES.CREATE, data),
+  updateDevice: (id, data) => axios.put(API_ENDPOINTS.DEVICES.UPDATE(id), data),
+  deleteDevice: (id) => axios.delete(API_ENDPOINTS.DEVICES.DELETE(id))
 };
 
 // Office related API calls
 export const officeService = {
-  getAllOffices: () => axios.get('/offices'),
-  addOffice: (data) => axios.post('/offices', data),
-  updateOffice: (id, data) => axios.put(`/offices/${id}`, data),
-  deleteOffice: (id) => axios.delete(`/offices/${id}`)
+  getAllOffices: () => axios.get(API_ENDPOINTS.OFFICES.GET_ALL),
+  addOffice: (data) => axios.post(API_ENDPOINTS.OFFICES.CREATE, data),
+  updateOffice: (id, data) => axios.put(API_ENDPOINTS.OFFICES.UPDATE(id), data),
+  deleteOffice: (id) => axios.delete(API_ENDPOINTS.OFFICES.DELETE(id))
 };
 
 // Report related API calls
 export const reportService = {
-  getAllReports: () => axios.get('/reports'),
-  addReport: (data) => axios.post('/reports', data),
-  updateReport: (id, data) => axios.put(`/reports/${id}`, data),
-  deleteReport: (id) => axios.delete(`/reports/${id}`),
-  resolveReport: (id) => axios.post(`/reports/${id}/resolve`)
+  getAllReports: () => axios.get(API_ENDPOINTS.REPORTS.GET_ALL),
+  addReport: (data) => axios.post(API_ENDPOINTS.REPORTS.CREATE, data),
+  updateReport: (id, data) => axios.put(API_ENDPOINTS.REPORTS.UPDATE(id), data),
+  deleteReport: (id) => axios.delete(API_ENDPOINTS.REPORTS.DELETE(id)),
+  resolveReport: (id) => axios.post(`${API_ENDPOINTS.REPORTS.BASE}/${id}/resolve`)
 };

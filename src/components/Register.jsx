@@ -12,7 +12,7 @@ import {
   FormControl, 
   InputLabel 
 } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider';
 
 function Register() {
@@ -31,12 +31,23 @@ function Register() {
 
   useEffect(() => {
     // Fetch offices from backend
-    axios.get('http://127.0.0.1:8000/api/offices')
+    axiosInstance.get('/offices')
       .then(response => {
-        setOffices(response.data);
+        // Ensure offices is always an array
+        let officesData = [];
+        if (response.data?.data?.offices && Array.isArray(response.data.data.offices)) {
+          officesData = response.data.data.offices;
+        } else if (Array.isArray(response.data)) {
+          officesData = response.data;
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          officesData = response.data.data;
+        }
+        console.log('Offices data:', officesData);
+        setOffices(officesData);
       })
       .catch(error => {
         console.error('Error fetching offices:', error);
+        setOffices([]); // Set to empty array on error
       });
   }, []);
 
@@ -51,9 +62,12 @@ function Register() {
       office_id: officeId
     };
 
-    axios.post('http://127.0.0.1:8000/api/register', userData, {
+    axiosInstance.post('/register', userData, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
       }
     })
     .then((response) => {
@@ -142,7 +156,6 @@ function Register() {
                 <MenuItem value={0}>User</MenuItem>
                 <MenuItem value={1}>Staff</MenuItem>
                 <MenuItem value={2}>Admin</MenuItem>
-                <MenuItem value={3}>Super Admin</MenuItem>
               </Select>
             </FormControl>
           )}

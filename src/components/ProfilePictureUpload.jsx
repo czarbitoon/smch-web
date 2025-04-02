@@ -9,7 +9,7 @@ function ProfilePictureUpload() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get('/profile'); // Fetch user profile
+        const response = await axios.get('/api/profile'); // Fetch user profile
         setUser(response.data.user);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -30,7 +30,7 @@ function ProfilePictureUpload() {
     formData.append('profile_picture', file);
 
     try {
-      const response = await axios.post('/profile/upload-picture', formData, {
+      const response = await axios.post('/api/profile/upload-picture', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`,

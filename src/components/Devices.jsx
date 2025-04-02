@@ -19,12 +19,15 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AddDevice from './AddDevice';
+import AddReport from './AddReport';
 import { AuthContext } from '../context/AuthProvider';
 import axios from '../axiosInstance';
+
 const Devices = () => {
   const [devices, setDevices] = useState([]);
   const [page, setPage] = useState(1);
@@ -40,6 +43,7 @@ const Devices = () => {
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   const [editDevice, setEditDevice] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
     description: '',
@@ -50,6 +54,13 @@ const Devices = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const isAdmin = Number(userType) >= 2;
   const isStaff = Number(userType) === 1;
+
+  // Handle device card click to open report form
+  const handleDeviceCardClick = (device) => {
+    setSelectedDevice(device);
+    setIsReportDialogOpen(true);
+  };
+
   const handleDeviceAdded = (newDevice) => {
     fetchDevices();
   };
@@ -76,7 +87,7 @@ const Devices = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/devices/${editDevice.id}`, editFormData);
+      await axios.put(`/api/devices/${editDevice.id}`, editFormData);
       setSnackbar({
         open: true,
         message: 'Device updated successfully',
@@ -114,7 +125,7 @@ const Devices = () => {
       params.append('per_page', Math.max(1, rowsPerPage));
       
       console.log('[Devices] Fetching devices with params:', Object.fromEntries(params));
-      const response = await axios.get('/devices', { params });
+      const response = await axios.get('/api/devices', { params });
       console.log('[Devices] API Response:', response.data);
       
       if (response.data && response.data.success && response.data.data) {
@@ -165,7 +176,7 @@ const Devices = () => {
   }, [page]); // Only trigger on page changes
   const fetchOffices = async () => {
     try {
-      const response = await axios.get('/offices');
+      const response = await axios.get('/api/offices');
       if (response.data?.success && Array.isArray(response.data?.data)) {
         setOffices(response.data.data);
       } else if (response.data?.data?.offices) {
@@ -190,7 +201,7 @@ const Devices = () => {
     }
 
     try {
-      await axios.post('/reports', {
+      await axios.post('/api/reports', {
         title: `Device Issue Report - Device ID: ${deviceId}`,
         description: issueDescription,
         device_id: deviceId,
@@ -215,7 +226,7 @@ const Devices = () => {
   };
   const getDeviceStatus = async (deviceId) => {
     try {
-      const response = await axios.get(`/devices/${deviceId}/status`);
+      const response = await axios.get(`/api/devices/${deviceId}/status`);
       setDevices(prevDevices => 
         prevDevices.map(device => 
           device.id === deviceId ? { ...device, status: response.data.status } : device
@@ -249,7 +260,7 @@ const Devices = () => {
               <MenuItem value="all">All Devices</MenuItem>
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
-              <MenuItem value="maintenance">Under Maintenance</MenuItem>
+              <MenuItem value="maintenance">Maintenance</MenuItem>
             </Select>
           </FormControl>
           
@@ -308,13 +319,27 @@ const Devices = () => {
           {devices && devices.length > 0 ? (
             devices.map(device => (
               <Grid item xs={12} sm={6} md={4} key={device.id}>
-                <Paper elevation={3} sx={{ p: 2 }}>
+                <Paper 
+                  elevation={3} 
+                  sx={{ 
+                    p: 2, 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 6
+                    }
+                  }}
+                  onClick={() => handleDeviceCardClick(device)}
+                >
                   <Typography variant="h6" gutterBottom>
                     {device.name}
                   </Typography>
                   <Box sx={{ mb: 2 }}>
                     <Chip 
-                      label={device.status} 
+                      label={device.status === 'maintenance' ? 'Maintenance' : 
+                             device.status === 'active' ? 'Active' : 
+                             device.status === 'inactive' ? 'Inactive' : device.status} 
                       color={
                         device.status === 'active' ? 'success' :
                         device.status === 'maintenance' ? 'warning' : 'error'
@@ -342,7 +367,10 @@ const Devices = () => {
                       <Button 
                         variant="contained" 
                         size="small"
-                        onClick={() => setSelectedDevice(device)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click event
+                          setSelectedDevice(device);
+                        }}
                       >
                         Log Issue
                       </Button>
@@ -350,7 +378,10 @@ const Devices = () => {
                     <Button 
                       variant="outlined" 
                       size="small"
-                      onClick={() => getDeviceStatus(device.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click event
+                        getDeviceStatus(device.id);
+                      }}
                     >
                       Refresh Status
                     </Button>
@@ -359,7 +390,10 @@ const Devices = () => {
                         variant="outlined" 
                         color="secondary"
                         size="small"
-                        onClick={() => handleEditClick(device)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click event
+                          handleEditClick(device);
+                        }}
                       >
                         Edit
                       </Button>
@@ -419,6 +453,20 @@ const Devices = () => {
         onSuccess={handleDeviceAdded}
       />
 
+      {/* Report Dialog */}
+      <AddReport
+        open={isReportDialogOpen}
+        onClose={() => setIsReportDialogOpen(false)}
+        onSuccess={() => {
+          setIsReportDialogOpen(false);
+          setSnackbar({
+            open: true,
+            message: 'Report submitted successfully',
+            severity: 'success'
+          });
+        }}
+      />
+
       {/* Edit Device Dialog */}
       <Dialog open={isEditDialogOpen} onClose={handleEditClose} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Device</DialogTitle>
@@ -464,7 +512,7 @@ const Devices = () => {
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
-                <MenuItem value="maintenance">Under Maintenance</MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
               </Select>
             </FormControl>
           </DialogContent>
@@ -474,6 +522,21 @@ const Devices = () => {
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* Snackbar for success/error messages */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
