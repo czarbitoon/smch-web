@@ -3,17 +3,20 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box
 import { reportService } from '../services/api';
 import axios from '../axiosInstance';
 
-function AddReport({ open, onClose, onSuccess }) {
+function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
   const [description, setDescription] = useState('');
-  const [deviceId, setDeviceId] = useState('');
+  const [deviceId, setDeviceId] = useState(preselectedDeviceId || '');
   const [devices, setDevices] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     if (open) {
       fetchDevices();
+      if (preselectedDeviceId) {
+        setDeviceId(preselectedDeviceId);
+      }
     }
-  }, [open]);
+  }, [open, preselectedDeviceId]);
 
   const fetchDevices = async () => {
     try {
