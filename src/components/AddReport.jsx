@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box, TextField, Button, Stack, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box, TextField, Button, Stack, FormControl, InputLabel, Select, MenuItem, Typography, IconButton } from '@mui/material';
+import { PhotoCamera, Close } from '@mui/icons-material';
 import { reportService } from '../services/api';
 import axios from '../axiosInstance';
 
@@ -7,6 +8,9 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
   const [description, setDescription] = useState('');
   const [deviceId, setDeviceId] = useState(preselectedDeviceId || '');
   const [devices, setDevices] = useState([]);
+  const [reportImage, setReportImage] = useState(null);
+  const [reportImagePreview, setReportImagePreview] = useState('');
+  const fileInputRef = useRef(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
@@ -36,6 +40,26 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
 
 
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setReportImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReportImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setReportImage(null);
+    setReportImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!deviceId) {
@@ -49,12 +73,16 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
 
     try {
       const selectedDevice = devices.find(d => d.id === deviceId);
-      const reportData = {
-        title: `Issue Report - ${selectedDevice?.name || 'Device'}`,
-        description,
-        device_id: deviceId,
-        status: 'pending'
-      };
+      const formData = new FormData();
+      formData.append('title', `Issue Report - ${selectedDevice?.name || 'Device'}`);
+      formData.append('description', description);
+      formData.append('device_id', deviceId);
+      formData.append('status', 'pending');
+      
+      // Add the image if one was selected
+      if (reportImage) {
+        formData.append('report_image', reportImage);
+      }
 
       const token = localStorage.getItem('token');
       if (!token) {
@@ -67,9 +95,10 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
       }
 
       // Set the authorization header for the reportService
-      const response = await axios.post('/reports', reportData, {
+      const response = await axios.post('/reports', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
 
@@ -96,6 +125,8 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
   const handleClose = () => {
     setDescription('');
     setDeviceId('');
+    setReportImage(null);
+    setReportImagePreview('');
     onClose && onClose();
   };
 
@@ -143,6 +174,57 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
                 placeholder="Please provide details about the issue you're experiencing with this device"
               />
+              
+              {/* Image Upload Section */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Add Image (Optional)
+                </Typography>
+                
+                {reportImagePreview ? (
+                  <Box sx={{ position: 'relative', mt: 1 }}>
+                    <img 
+                      src={reportImagePreview} 
+                      alt="Report preview" 
+                      style={{ 
+                        width: '100%', 
+                        maxHeight: '200px', 
+                        objectFit: 'cover',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <IconButton
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        backgroundColor: 'rgba(0,0,0,0.5)',
+                        color: 'white',
+                        '&:hover': { backgroundColor: 'rgba(0,0,0,0.7)' }
+                      }}
+                      onClick={handleRemoveImage}
+                    >
+                      <Close />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<PhotoCamera />}
+                    sx={{ mt: 1 }}
+                  >
+                    Upload Image
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={handleImageChange}
+                    />
+                  </Button>
+                )}
+              </Box>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

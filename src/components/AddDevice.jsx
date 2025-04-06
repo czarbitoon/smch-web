@@ -1,6 +1,7 @@
 // src\components\AddDevice.jsx
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, IconButton } from '@mui/material';
+import { PhotoCamera, Close } from '@mui/icons-material';
 import axios from '../axiosInstance';
 
 function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
@@ -14,6 +15,9 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [deviceImage, setDeviceImage] = useState(null);
+  const [deviceImagePreview, setDeviceImagePreview] = useState('');
+  const fileInputRef = useRef(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
@@ -114,17 +118,48 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setDeviceImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDeviceImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setDeviceImage(null);
+    setDeviceImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleAddDevice = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/devices', {
-        name: name,
-        description: description,
-        office_id: officeId,
-        category_id: selectedCategory,
-        type_id: selectedType,
-        subcategory_id: selectedSubcategory
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('office_id', officeId);
+      formData.append('category_id', selectedCategory);
+      formData.append('type_id', selectedType);
+      formData.append('subcategory_id', selectedSubcategory);
+      
+      // Add the image if one was selected
+      if (deviceImage) {
+        formData.append('device_image', deviceImage);
+      }
+
+      const response = await axios.post('/api/devices', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
+      
       setSnackbar({
         open: true,
         message: 'Device added successfully!',
@@ -148,6 +183,8 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
     setSelectedCategory('');
     setSelectedType('');
     setSelectedSubcategory('');
+    setDeviceImage(null);
+    setDeviceImagePreview('');
     onClose && onClose();
   };
 
@@ -187,6 +224,61 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
           ))}
         </Select>
       </FormControl>
+      
+      {/* Device Image Upload Section */}
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Device Image (Optional)
+        </Typography>
+        
+        {deviceImagePreview ? (
+          <Box sx={{ position: 'relative', mt: 1 }}>
+            <img 
+              src={deviceImagePreview} 
+              alt="Device preview" 
+              style={{ 
+                width: '100%', 
+                maxHeight: '200px', 
+                objectFit: 'cover',
+                borderRadius: '8px'
+              }} 
+            />
+            <IconButton
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                bgcolor: 'rgba(0, 0, 0, 0.5)',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: 'rgba(0, 0, 0, 0.7)'
+                }
+              }}
+              onClick={handleRemoveImage}
+              size="small"
+            >
+              <Close />
+            </IconButton>
+          </Box>
+        ) : (
+          <Button
+            variant="outlined"
+            component="label"
+            startIcon={<PhotoCamera />}
+            sx={{ mt: 1 }}
+          >
+            Upload Device Image
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={handleImageChange}
+              ref={fileInputRef}
+            />
+          </Button>
+        )}
+      </Box>
+      
       <FormControl fullWidth margin="normal" required>
         <InputLabel>Category</InputLabel>
         <Select
@@ -316,6 +408,60 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
                   ))}
                 </Select>
               </FormControl>
+              
+              {/* Device Image Upload Section */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Device Image (Optional)
+                </Typography>
+                
+                {deviceImagePreview ? (
+                  <Box sx={{ position: 'relative', mt: 1 }}>
+                    <img 
+                      src={deviceImagePreview} 
+                      alt="Device preview" 
+                      style={{ 
+                        width: '100%', 
+                        maxHeight: '200px', 
+                        objectFit: 'cover',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <IconButton
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        bgcolor: 'rgba(0, 0, 0, 0.5)',
+                        color: 'white',
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 0, 0, 0.7)'
+                        }
+                      }}
+                      onClick={handleRemoveImage}
+                      size="small"
+                    >
+                      <Close />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<PhotoCamera />}
+                    sx={{ mt: 1 }}
+                  >
+                    Upload Device Image
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      ref={fileInputRef}
+                    />
+                  </Button>
+                )}
+              </Box>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

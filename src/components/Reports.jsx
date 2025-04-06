@@ -172,6 +172,57 @@ const Reports = () => {
                   <Typography variant="body1" paragraph>
                     {report.description}
                   </Typography>
+                  
+                  {/* Display report images if available */}
+                  <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    {report.device_image_url && (
+                      <Box sx={{ width: { xs: '100%', sm: '48%' } }}>
+                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          Device Image:
+                        </Typography>
+                        <Box
+                          component="img"
+                          src={report.device_image_url}
+                          alt="Device"
+                          sx={{
+                            width: '100%',
+                            height: 200,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            boxShadow: 1
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Available';
+                          }}
+                        />
+                      </Box>
+                    )}
+                    
+                    {report.report_image && (
+                      <Box sx={{ width: { xs: '100%', sm: '48%' } }}>
+                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                          Report Image:
+                        </Typography>
+                        <Box
+                          component="img"
+                          src={`${import.meta.env.VITE_API_BASE_URL}/storage/${report.report_image}`}
+                          alt="Report"
+                          sx={{
+                            width: '100%',
+                            height: 200,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            boxShadow: 1
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Available';
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
                   <Stack spacing={1} sx={{ mt: 1 }}>
                     <Typography variant="body2" color="text.secondary" component="div">
                       Generated on: {new Date(report.created_at).toLocaleDateString()}
