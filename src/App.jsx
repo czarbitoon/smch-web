@@ -1,133 +1,127 @@
-import { useContext, useState } from 'react';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
+import { ErrorBoundary } from 'react-error-boundary';
+import { useAuth } from './hooks/useAuth';
+import Layout from './components/Layout';
+import ErrorFallback from './components/ErrorFallback';
 
-import { CircularProgress, Box } from '@mui/material'; 
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthContext } from './context/AuthProvider'; 
-import Login from './components/Login';
-import Register from './components/Register';
-import Devices from './components/Devices';
-import AddDevice from './components/AddDevice';
-import AddOffice from './components/AddOffice';
-import AddReport from './components/AddReport';
+// Lazy load components
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Devices = lazy(() => import('./pages/Devices'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Settings = lazy(() => import('./pages/Settings'));
 
-import AdminDashboard from './components/AdminDashboard';
-import StaffDashboard from './components/StaffDashboard';
-import UserDashboard from './components/UserDashboard';
+// Loading component
+const LoadingScreen = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="100vh"
+  >
+    <CircularProgress />
+  </Box>
+);
 
-import Offices from './components/Office'; // Import Offices component
-import Reports from './components/Reports'; // Import Reports component
-import AppHeader from './components/AppHeader'; 
-import AppSidebar from './components/AppSidebar';
+// Protected route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
 
-function App() {
-  const { isAuthenticated, loading, userRole } = useContext(AuthContext);
-  const [sidebarVisible, setSidebarVisible] = useState(true);
-
-  const toggleSidebar = () => setSidebarVisible(prev => !prev);
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
-    );
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
-  const getDashboardRoute = () => {
-    if (!isAuthenticated) return '/login';
-    const role = Number(userRole);
-    if (role >= 2) return '/admin/dashboard';
-    if (role === 1) return '/staff/dashboard';
-    return '/user/dashboard';
-  };
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-  const ProtectedRoute = ({ element: Element, requiredRole }) => {
-    // Only redirect if not authenticated
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
-    
-    // Only check role if requiredRole is specified
-    if (requiredRole !== undefined) {
-      const currentRole = Number(userRole);
-      const requiredRoleNum = Number(requiredRole);
-      
-      // Only redirect if user's role is insufficient
-      if (currentRole < requiredRoleNum) {
-        // Instead of redirecting to dashboard, show an error or restricted access message
-        return <Navigate to="/unauthorized" replace />;
-      }
-    }
-    
-    // If all checks pass, render the protected component
-    return Element;
-  };
+  return children;
+};
+
+const App = () => {
+  // Prefetch components on app load
+  React.useEffect(() => {
+    const prefetchComponents = () => {
+      const components = [
+        () => import('./pages/Login'),
+        () => import('./pages/Dashboard'),
+        () => import('./pages/Devices'),
+        () => import('./pages/Notifications'),
+        () => import('./pages/Settings'),
+      ];
+
+      components.forEach(component => {
+        // Prefetch after initial load
+        setTimeout(() => {
+          component();
+        }, 1000);
+      });
+    };
+
+    prefetchComponents();
+  }, []);
 
   return (
-    <Router>
-      {isAuthenticated ? (
-        <>
-          <AppHeader onToggleSidebar={toggleSidebar} />
-          <AppSidebar isVisible={sidebarVisible} onToggle={toggleSidebar} />
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <BrowserRouter>
+        <Suspense fallback={<LoadingScreen />}>
           <Routes>
-            <Route path="/" element={<Navigate to={getDashboardRoute()} replace />} />
             <Route
-              path="/admin/dashboard"
-              element={<ProtectedRoute element={<AdminDashboard />} requiredRole={2} />}
+              path="/login"
+              element={
+                <Suspense fallback={<LoadingScreen />}>
+                  <Login />
+                </Suspense>
+              }
             />
             <Route
-              path="/staff/dashboard"
-              element={<ProtectedRoute element={<StaffDashboard />} requiredRole={1} />}
-            />
-            <Route
-              path="/user/dashboard"
-              element={<ProtectedRoute element={<UserDashboard />} requiredRole={0} />}
-            />
-            <Route
-              path="/devices"
-              element={<ProtectedRoute element={<Devices />} />}
-            />
-            <Route
-              path="/devices/add"
-              element={<ProtectedRoute element={<AddDevice isStandalone={true} />} requiredRole={1} />}
-            />
-            <Route
-              path="/reports"
-              element={<ProtectedRoute element={<Reports />} />}
-            />
-            <Route
-              path="/reports/add"
-              element={<ProtectedRoute element={<AddReport />} />}
-            />
-            <Route
-              path="/offices"
-              element={<ProtectedRoute element={<Offices />} />}
-            />
-            <Route
-              path="/offices/add"
-              element={<ProtectedRoute element={<AddOffice />} requiredRole={2} />}
-            />
-            <Route
-              path="/admin/register"
-              element={<ProtectedRoute element={<Register />} requiredRole={2} />}
-            />
-            <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
-            <Route path="*" element={<div>Page Not Found</div>} />
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route
+                index
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Dashboard />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="devices"
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Devices />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="notifications"
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Notifications />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="settings"
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Settings />
+                  </Suspense>
+                }
+              />
+            </Route>
           </Routes>
-        </>
-      ) : (
-        <Routes>
-          <Route
-            path="/login"
-            element={isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <Login />}
-          />
-          <Route
-            path="/register"
-            element={isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <Register />}
-          />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      )}
-    </Router>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
-}
+};
 
 export default App;

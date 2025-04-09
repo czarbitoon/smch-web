@@ -1,7 +1,7 @@
 // src\components\AddDevice.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, IconButton } from '@mui/material';
-import { PhotoCamera, Close } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Stack, IconButton, CircularProgress } from '@mui/material';
+import { PhotoCamera, Close, AddPhotoAlternate } from '@mui/icons-material';
 import axios from '../axiosInstance';
 
 function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
@@ -17,6 +17,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [deviceImage, setDeviceImage] = useState(null);
   const [deviceImagePreview, setDeviceImagePreview] = useState('');
+  const [imageLoading, setImageLoading] = useState(false);
   const fileInputRef = useRef(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -121,10 +122,41 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        setSnackbar({
+          open: true,
+          message: 'Please upload a valid image file (JPEG, PNG, GIF)',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setSnackbar({
+          open: true,
+          message: 'Image size should be less than 5MB',
+          severity: 'error'
+        });
+        return;
+      }
+      
+      setImageLoading(true);
       setDeviceImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setDeviceImagePreview(reader.result);
+        setImageLoading(false);
+      };
+      reader.onerror = () => {
+        setSnackbar({
+          open: true,
+          message: 'Error loading image. Please try again.',
+          severity: 'error'
+        });
+        setImageLoading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -415,52 +447,81 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
                   Device Image (Optional)
                 </Typography>
                 
-                {deviceImagePreview ? (
-                  <Box sx={{ position: 'relative', mt: 1 }}>
-                    <img 
-                      src={deviceImagePreview} 
-                      alt="Device preview" 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '200px', 
-                        objectFit: 'cover',
-                        borderRadius: '8px'
-                      }} 
-                    />
-                    <IconButton
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        bgcolor: 'rgba(0, 0, 0, 0.5)',
-                        color: 'white',
-                        '&:hover': {
-                          bgcolor: 'rgba(0, 0, 0, 0.7)'
-                        }
-                      }}
-                      onClick={handleRemoveImage}
-                      size="small"
-                    >
-                      <Close />
-                    </IconButton>
-                  </Box>
-                ) : (
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    startIcon={<PhotoCamera />}
-                    sx={{ mt: 1 }}
-                  >
-                    Upload Device Image
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      ref={fileInputRef}
-                    />
-                  </Button>
-                )}
+                <Box sx={{ 
+                  border: '2px dashed #ccc', 
+                  borderRadius: 2, 
+                  p: 2, 
+                  mt: 1,
+                  minHeight: '150px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f9f9f9'
+                }}>
+                  {imageLoading ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                      <CircularProgress size={40} />
+                      <Typography variant="body2" color="text.secondary">
+                        Processing image...
+                      </Typography>
+                    </Box>
+                  ) : deviceImagePreview ? (
+                    <Box sx={{ position: 'relative', width: '100%' }}>
+                      <img 
+                        src={deviceImagePreview} 
+                        alt="Device preview" 
+                        style={{ 
+                          width: '100%', 
+                          maxHeight: '200px', 
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }} 
+                      />
+                      <IconButton
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          bgcolor: 'rgba(0, 0, 0, 0.5)',
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'rgba(0, 0, 0, 0.7)'
+                          }
+                        }}
+                        onClick={handleRemoveImage}
+                        size="small"
+                      >
+                        <Close />
+                      </IconButton>
+                    </Box>
+                  ) : (
+                    <>
+                      <AddPhotoAlternate sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+                      <Typography variant="body1" color="text.secondary" gutterBottom>
+                        Drag and drop an image here or
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<PhotoCamera />}
+                        sx={{ mt: 1 }}
+                      >
+                        Browse Files
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/jpeg,image/png,image/gif,image/jpg"
+                          onChange={handleImageChange}
+                          ref={fileInputRef}
+                        />
+                      </Button>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                        Supported formats: JPEG, PNG, GIF (max 5MB)
+                      </Typography>
+                    </>
+                  )}
+                </Box>
               </Box>
             </Stack>
           </DialogContent>

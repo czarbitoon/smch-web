@@ -333,26 +333,28 @@ const Devices = () => {
                   onClick={() => handleDeviceCardClick(device)}
                 >
                   {/* Device Image */}
-                  {device.image_url && (
-                    <Box sx={{ mb: 2, overflow: 'hidden', borderRadius: 1 }}>
-                      <Box
-                        component="img"
-                        src={device.image_url}
-                        alt={device.name}
-                        sx={{
-                          width: '100%',
-                          height: 140,
-                          objectFit: 'cover',
-                          borderRadius: 1,
-                          boxShadow: 1
-                        }}
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
-                        }}
-                      />
-                    </Box>
-                  )}
+                  <Box sx={{ mb: 2, overflow: 'hidden', borderRadius: 1, height: 140 }}>
+                    <Box
+                      component="img"
+                      src={device.image_url || 'https://via.placeholder.com/400x200?text=No+Image'}
+                      alt={device.name}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        boxShadow: 1,
+                        transition: 'transform 0.3s ease',
+                        '&:hover': {
+                          transform: 'scale(1.05)'
+                        }
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
+                      }}
+                    />
+                  </Box>
                   
                   <Typography variant="h6" gutterBottom>
                     {device.name}
