@@ -78,7 +78,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const fetchSubcategories = async (typeId) => {
     try {
       console.log('[AddDevice] Fetching subcategories for type:', typeId);
-      const response = await axios.get(`/api/device-types/${typeId}/subcategories`);
+      const response = await axios.get(`/api/device-categories/${selectedCategoryId}/types/${typeId}/subcategories`);
       console.log('[AddDevice] Subcategories API Response:', response.data);
       setSubcategories(response.data);
     } catch (error) {
@@ -96,7 +96,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
       const response = await axios.get('/api/offices');
       if (response.data?.success && Array.isArray(response.data.data)) {
         setOffices(response.data.data);
-      } else if (response.data?.data?.offices) {
+      } else if (response.data?.data?.offices && Array.isArray(response.data.data.offices)) {
         setOffices(response.data.data.offices);
       } else if (Array.isArray(response.data)) {
         setOffices(response.data);

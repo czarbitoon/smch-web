@@ -130,18 +130,13 @@ const Devices = () => {
       
       if (response.data && response.data.success && response.data.data) {
         // Extract data and pagination info from response
-        const deviceData = response.data.data.devices || [];
+        const deviceData = response.data.data.data || [];
         console.log('[Devices] Device data:', deviceData);
         console.log('[Devices] First device details:', deviceData[0]);
-        
-        const pagination = response.data.data.pagination || {};
-        
-        // Update state with the fetched data
+        const pagination = response.data.data;
         setDevices(deviceData);
         setTotalItems(pagination.total || 0);
         setPage(pagination.current_page || 1);
-        
-        // Clear any previous errors
         setError('');
       } else {
         throw new Error(response.data?.message || 'Invalid response format');
@@ -179,7 +174,7 @@ const Devices = () => {
       const response = await axios.get('/api/offices');
       if (response.data?.success && Array.isArray(response.data?.data)) {
         setOffices(response.data.data);
-      } else if (response.data?.data?.offices) {
+      } else if (response.data?.data?.offices && Array.isArray(response.data.data.offices)) {
         setOffices(response.data.data.offices);
       } else if (Array.isArray(response.data)) {
         setOffices(response.data);

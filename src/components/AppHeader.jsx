@@ -42,8 +42,8 @@ const AppHeader = ({ onToggleSidebar }) => {
   const { user } = useContext(AuthContext);
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   
-  const isAdmin = user?.role === 1;
-  const isStaff = user?.role === 2;
+  const isAdmin = user?.type === 2 || user?.type === 3;
+  const isStaff = user?.type === 1;
 
   useEffect(() => {
     document.addEventListener('scroll', () => {

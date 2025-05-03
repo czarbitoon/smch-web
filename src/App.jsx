@@ -41,6 +41,8 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const App = () => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
   // Prefetch components on app load
   React.useEffect(() => {
     const prefetchComponents = () => {
@@ -51,27 +53,32 @@ const App = () => {
         () => import('./pages/Notifications'),
         () => import('./pages/Settings'),
       ];
-
       components.forEach(component => {
-        // Prefetch after initial load
         setTimeout(() => {
           component();
         }, 1000);
       });
     };
-
     prefetchComponents();
   }, []);
+
+  // Modern home route logic: redirect to dashboard based on user type
+  const getDashboardRoute = () => {
+    if (!user) return '/login';
+    if (user.type === 2 || user.type === 3) return '/admin/dashboard';
+    if (user.type === 1) return '/staff/dashboard';
+    return '/user/dashboard';
+  };
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <BrowserRouter>
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<LoadingScreen />}> 
           <Routes>
             <Route
               path="/login"
               element={
-                <Suspense fallback={<LoadingScreen />}>
+                <Suspense fallback={<LoadingScreen />}> 
                   <Login />
                 </Suspense>
               }
@@ -79,43 +86,47 @@ const App = () => {
             <Route
               path="/"
               element={
+                isLoading ? <LoadingScreen /> : <Navigate to={getDashboardRoute()} replace />
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
                 <ProtectedRoute>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              <Route
-                index
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Dashboard />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="devices"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Devices />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="notifications"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Notifications />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Settings />
-                  </Suspense>
-                }
-              />
+              <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
+              <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
+              <Route path="notifications" element={<Suspense fallback={<LoadingScreen />}><Notifications /></Suspense>} />
+              <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
+            </Route>
+            <Route
+              path="/staff/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
+              <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
+              <Route path="notifications" element={<Suspense fallback={<LoadingScreen />}><Notifications /></Suspense>} />
+              <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
+            </Route>
+            <Route
+              path="/user/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
+              <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
+              <Route path="notifications" element={<Suspense fallback={<LoadingScreen />}><Notifications /></Suspense>} />
+              <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
           </Routes>
         </Suspense>
