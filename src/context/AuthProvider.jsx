@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userType, setUserType] = useState(0); // Initialize with 0 for regular user
+  const [userRole, setUserRole] = useState('user'); // Initialize with 'user' for regular user
   const [officeId, setOfficeId] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -17,7 +17,7 @@ const AuthProvider = ({ children }) => {
     try {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
-        setUserType(0);  // Reset type to 0 on logout
+        setUserRole('user');  // Reset role to 'user' on logout
         setUser(null); // Reset user on logout
     } catch (error) {
         console.error('Logout failed:', error);
@@ -34,7 +34,7 @@ const AuthProvider = ({ children }) => {
       if (!token) {
         if (isMounted) {
           setIsAuthenticated(false);
-          setUserType(0); // Ensure default type is 0
+          setUserRole('user'); // Ensure default role is 'user'
           setLoading(false);
         }
         return;
@@ -45,19 +45,21 @@ const AuthProvider = ({ children }) => {
 
         if (isMounted) {
           setIsAuthenticated(response.status === 200);
-          // Ensure userType is always a valid number
+          // Map numeric type to role string
+          let role = 'user';
           const typeValue = response.data?.type;
-          const parsedType = Number(typeValue);
-          setUserType(Number.isNaN(parsedType) ? 0 : parsedType);
+          if (typeValue === 2 || typeValue === 3) role = 'admin';
+          else if (typeValue === 1) role = 'staff';
+          setUserRole(role);
           setOfficeId(response.data.office_id);
-          setUser(response.data); // Store the full user object
+          setUser({ ...response.data, role }); // Store the full user object with role
         }
       } catch (error) {
         console.error('Session validation failed:', error);
 
         if (isMounted) {
           setIsAuthenticated(false);
-          setUserType(0); // Set to default type instead of null
+          setUserRole('user'); // Set to default role instead of null
           setUser(null);
           localStorage.removeItem('token');
         }
@@ -82,8 +84,8 @@ const AuthProvider = ({ children }) => {
       isAuthenticated, 
       setIsAuthenticated, 
       logout,
-      userType,
-      setUserType,
+      userRole,
+      setUserRole,
       officeId,
       user,
       setUser

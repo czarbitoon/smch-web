@@ -37,6 +37,7 @@ const Reports = () => {
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { user } = useContext(AuthContext);
+  const userRole = user?.role || 'user';
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,7 +56,7 @@ const Reports = () => {
       const params = new URLSearchParams();
       
       // If not admin/staff, only show reports from user's office
-      if (user?.type < 1) {
+      if (userRole !== 'admin' && userRole !== 'staff') {
         params.append('office_id', user.office_id);
       }
 
@@ -361,3 +362,9 @@ const Reports = () => {
 };
 
 export default Reports;
+
+// For admin controls in report history
+const isAdmin = userRole === 'admin';
+const isStaff = userRole === 'staff';
+
+Use isAdmin or isStaff for permission checks and UI rendering

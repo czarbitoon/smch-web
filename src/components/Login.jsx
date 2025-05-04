@@ -11,7 +11,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { setIsAuthenticated, setUserType } = useContext(AuthContext); // Use context instead of prop
+  const { setIsAuthenticated, setUserRole } = useContext(AuthContext); // Use context instead of prop
 
 
   const handleLogin = async (e) => {
@@ -26,16 +26,18 @@ function Login() {
       localStorage.setItem('token', response.data.access_token);
       setIsAuthenticated(true);
       
-      // Set user Type directly from the API response
-      const userType = response.data.Type;
-      setUserType(userType);
-
-      // Navigate to the appropriate dashboard based on numeric user Type
-      if (userType === 2 || userType === 3) { // 2 for admin, 3 for superadmin
+      // Map numeric type to role string
+      let role = 'user';
+      const typeValue = response.data.Type;
+      if (typeValue === 2 || typeValue === 3) role = 'admin';
+      else if (typeValue === 1) role = 'staff';
+      setUserRole(role);
+      // Navigate to the appropriate dashboard based on role
+      if (role === 'admin') {
         navigate('/admin/dashboard');
-      } else if (userType === 1) { // 1 for staff
+      } else if (role === 'staff') {
         navigate('/staff/dashboard');
-      } else { // 0 for regular user
+      } else {
         navigate('/user/dashboard');
       }
 

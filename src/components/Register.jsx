@@ -27,7 +27,7 @@ function Register() {
   const navigate = useNavigate();
 
 
-  const isAdmin = user?.type === 2 || user?.type === 3;
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     // Fetch offices from backend
@@ -58,7 +58,7 @@ function Register() {
       email: email,
       password: password,
       password_confirmation: confirmPassword,
-      type: isAdmin ? type : 0,
+      role: isAdmin ? role : 'user',
       office_id: officeId
     };
 
@@ -146,16 +146,16 @@ function Register() {
           </FormControl>
           {isAdmin && (
             <FormControl fullWidth margin="normal">
-              <InputLabel>Role</InputLabel>
+              <InputLabel>User Role</InputLabel>
               <Select
-                value={type}
-                label="Role"
-                onChange={(e) => setType(e.target.value)}
-                required
+                value={role}
+                label="User Role"
+                onChange={(e) => setRole(e.target.value)}
+                disabled={!isAdmin}
               >
-                <MenuItem value={0}>User</MenuItem>
-                <MenuItem value={1}>Staff</MenuItem>
-                <MenuItem value={2}>Admin</MenuItem>
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="staff">Staff</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
               </Select>
             </FormControl>
           )}

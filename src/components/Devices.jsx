@@ -50,7 +50,9 @@ const Devices = () => {
     office_id: '',
     status: ''
   });
-  const { user, userType } = useContext(AuthContext);
+  const { user, userRole } = useContext(AuthContext);
+  const isAdmin = userRole === 'admin';
+  const isStaff = userRole === 'staff';
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const isAdmin = Number(userType) >= 2;
   const isStaff = Number(userType) === 1;
@@ -370,10 +372,10 @@ const Devices = () => {
                     ID: {device.id}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Category: {device.subcategory?.device_type?.device_category?.name || device.category?.name || 'N/A'}
+                    Category: {device.category?.name || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Type: {device.subcategory?.device_type?.name || device.type?.name || 'N/A'}
+                    Type: {device.type?.name || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
                     Subcategory: {device.subcategory?.name || 'N/A'}
