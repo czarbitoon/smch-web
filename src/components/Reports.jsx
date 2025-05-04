@@ -18,8 +18,11 @@ import {
   DialogActions,
   TextField,
   Alert,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { useNavigate } from 'react-router-dom';
 import AddReport from './AddReport';
 import axios from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider';
@@ -34,6 +37,7 @@ const Reports = () => {
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchReports();
@@ -125,9 +129,14 @@ const Reports = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
-          Reports
-        </Typography>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <IconButton aria-label="Back" onClick={() => navigate(-1)} sx={{ mr: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, '&:hover': { bgcolor: 'grey.100' } }}>
+            <ArrowBackIosNewIcon fontSize="medium" />
+          </IconButton>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
+            Reports
+          </Typography>
+        </Stack>
         <Button
           variant="contained"
           color="primary"
