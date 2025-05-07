@@ -156,7 +156,7 @@ const Reports = () => {
       <Box sx={{ mt: 2 }}>
         <List sx={{ '& .MuiListItem-root': { px: 0, py: 1 } }}>
           {reports.map(report => (
-            <ListItem key={report.id}>
+            <ListItem key={report.id} button onClick={() => navigate(`/reports/${report.id}`)}>
               <Paper 
                 elevation={1} 
                 sx={{ 
@@ -174,102 +174,48 @@ const Reports = () => {
                       {report.title}
                     </Typography>
                     <Chip
-                      label={report.resolved_by ? 'Resolved' : 'Pending'}
-                      color={report.resolved_by ? 'success' : 'warning'}
+                      label={report.status ? (report.status.charAt(0).toUpperCase() + report.status.slice(1)) : (report.resolved_by ? 'Resolved' : 'Pending')}
+                      color={report.status === 'resolved' || report.resolved_by ? 'success' : report.status === 'pending' ? 'warning' : report.status === 'repair' ? 'info' : report.status === 'decommissioned' ? 'error' : 'default'}
                       size="small"
                     />
                   </Stack>
                   <Typography variant="body1" paragraph>
                     {report.description}
                   </Typography>
-                  
-                  {/* Display report images if available */}
-                  <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {report.device_image_url && (
-                      <Box sx={{ width: { xs: '100%', sm: '48%' } }}>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Device Image:
-                        </Typography>
-                        <Box
-                          component="img"
-                          src={report.device_image_url}
-                          alt="Device"
-                          sx={{
-                            width: '100%',
-                            height: 200,
-                            objectFit: 'cover',
-                            borderRadius: 1,
-                            boxShadow: 1
-                          }}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Available';
-                          }}
-                        />
-                      </Box>
-                    )}
-                    
-                    {report.report_image && (
-                      <Box sx={{ width: { xs: '100%', sm: '48%' } }}>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Report Image:
-                        </Typography>
-                        <Box
-                          component="img"
-                          src={`${import.meta.env.VITE_API_BASE_URL}/storage/${report.report_image}`}
-                          alt="Report"
-                          sx={{
-                            width: '100%',
-                            height: 200,
-                            objectFit: 'cover',
-                            borderRadius: 1,
-                            boxShadow: 1
-                          }}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Available';
-                          }}
-                        />
-                      </Box>
-                    )}
-                  </Box>
-                  <Stack spacing={1} sx={{ mt: 1 }}>
-                    <Typography variant="body2" color="text.secondary" component="div">
-                      Generated on: {new Date(report.created_at).toLocaleDateString()}
+                  {report.device && (
+                    <Typography variant="body2" color="text.secondary">
+                      Device: {report.device.name || report.device_id}
                     </Typography>
-                    {report.user && (
-                      <Typography variant="body2" color="text.secondary" component="div">
-                        Reported by: {report.user.name}
+                  )}
+                  {report.office && (
+                    <Typography variant="body2" color="text.secondary">
+                      Office: {report.office.name || report.office_id}
+                    </Typography>
+                  )}
+                  {report.image_url && (
+                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Image:
                       </Typography>
-                    )}
-                    {report.office && (
-                      <Typography variant="body2" color="text.secondary" component="div">
-                        Office: {report.office.name}
-                      </Typography>
-                    )}
-                    {report.resolved_by && (
-                      <Typography variant="body2" color="text.secondary" component="div">
-                        Resolved by: {report.resolved_by_user?.name}
-                      </Typography>
-                    )}
-                  </Stack>
-                  {user?.type >= 1 && !report.resolved_by && (
-                    <Box sx={{ mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleOpenResolveDialog(report)}
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          px: 3,
-                          py: 1,
-                          borderRadius: 1.5
-                        }}
-                      >
-                        Resolve Report
-                      </Button>
+                      <Box>
+                        <img src={report.image_url} alt="Report" style={{ width: 220, height: 180, borderRadius: 8, objectFit: 'cover' }} />
+                      </Box>
                     </Box>
+                  )}
+                  {report.created_at && (
+                    <Typography variant="body2" color="text.secondary">
+                      Created: {new Date(report.created_at).toLocaleString()}
+                    </Typography>
+                  )}
+                  {report.resolved_by && (
+                    <Typography variant="body2" color="text.secondary">
+                      Resolved By: {report.resolved_by_user?.name || report.resolved_by_user?.email || report.resolved_by || 'Unknown'}
+                    </Typography>
+                  )}
+                  {report.resolution_notes && (
+                    <Typography variant="body2" color="text.secondary">
+                      Resolution Notes: {report.resolution_notes}
+                    </Typography>
                   )}
                 </Box>
               </Paper>
