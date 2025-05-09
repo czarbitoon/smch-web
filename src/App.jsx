@@ -5,6 +5,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import ErrorFallback from './components/ErrorFallback';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Pusher from 'pusher-js';
 
 // Lazy load components
 const Login = lazy(() => import('./pages/Login'));
@@ -42,6 +45,24 @@ const ProtectedRoute = ({ children }) => {
 
 const App = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
+
+  React.useEffect(() => {
+    // Initialize Pusher for real-time notifications
+    const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
+      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+      forceTLS: true,
+      encrypted: true,
+    });
+    const channel = pusher.subscribe('reports');
+    channel.bind('App\\Events\\ReportSubmitted', function(data) {
+      toast.info(`New report submitted: ${data.report.title || 'Untitled'}`);
+    });
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+      pusher.disconnect();
+    };
+  }, []);
 
   // Prefetch components on app load
   React.useEffect(() => {
@@ -130,6 +151,7 @@ const App = () => {
             </Route>
           </Routes>
         </Suspense>
+        <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       </BrowserRouter>
     </ErrorBoundary>
   );
