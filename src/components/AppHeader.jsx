@@ -31,7 +31,6 @@ import {
 import { AuthContext } from '../context/AuthProvider';
 
 import AppHeaderDropdown from './AppHeaderDropdown';
-import NotificationsDropdown from './NotificationsDropdown';
 
 const AppHeader = ({ onToggleSidebar }) => {
   AppHeader.propTypes = {
@@ -112,12 +111,6 @@ const AppHeader = ({ onToggleSidebar }) => {
         <CHeaderNav className="ms-auto">
           <CNavItem>
             <CNavLink href="#" className="nav-link-hover">
-              <CIcon icon={cilBell} size="lg" className="me-2" />
-              Notifications
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#" className="nav-link-hover">
               <CIcon icon={cilList} size="lg" className="me-2" />
               Tasks
             </CNavLink>
@@ -130,7 +123,6 @@ const AppHeader = ({ onToggleSidebar }) => {
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav className="ms-3">
-          <NotificationsDropdown />
           <AppHeaderDropdown />
         </CHeaderNav>
       </CContainer>

@@ -5,15 +5,13 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import ErrorFallback from './components/ErrorFallback';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Pusher from 'pusher-js';
 
 // Lazy load components
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Devices = lazy(() => import('./pages/Devices'));
-const Notifications = lazy(() => import('./pages/Notifications'));
+
 const Settings = lazy(() => import('./pages/Settings'));
 
 // Loading component
@@ -47,22 +45,7 @@ const App = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   React.useEffect(() => {
-    // Initialize Pusher for real-time notifications
-    const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
-      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-      forceTLS: true,
-      encrypted: true,
-    });
-    const channel = pusher.subscribe('reports');
-    channel.bind('App\\Events\\ReportSubmitted', function(data) {
-      toast.info(`New report submitted: ${data.report.title || 'Untitled'}`);
-    });
-    return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
-      pusher.disconnect();
-    };
-  }, []);
+
 
   // Prefetch components on app load
   React.useEffect(() => {
@@ -71,7 +54,7 @@ const App = () => {
         () => import('./pages/Login'),
         () => import('./pages/Dashboard'),
         () => import('./pages/Devices'),
-        () => import('./pages/Notifications'),
+
         () => import('./pages/Settings'),
       ];
       components.forEach(component => {
@@ -120,7 +103,7 @@ const App = () => {
             >
               <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
               <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-              <Route path="notifications" element={<Suspense fallback={<LoadingScreen />}><Notifications /></Suspense>} />
+      
               <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
             <Route
@@ -133,7 +116,7 @@ const App = () => {
             >
               <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
               <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-              <Route path="notifications" element={<Suspense fallback={<LoadingScreen />}><Notifications /></Suspense>} />
+      
               <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
             <Route
@@ -146,7 +129,7 @@ const App = () => {
             >
               <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
               <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-              <Route path="notifications" element={<Suspense fallback={<LoadingScreen />}><Notifications /></Suspense>} />
+      
               <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
           </Routes>

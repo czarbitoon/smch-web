@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Alert, Container, Typography, Box, Button, Avatar, Grid, Paper } from '@mui/material';
-import { Assignment, NotificationsActive, History } from '@mui/icons-material';
+import { Assignment, History } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import ProfilePictureUpload from './ProfilePictureUpload';
 import axios from '../axiosInstance'; // Import the custom Axios instance
@@ -110,7 +110,7 @@ function UserDashboard() {
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12}>
             <Paper elevation={3} sx={{ p: 3, textAlign: 'center', bgcolor: '#e3f2fd' }}>
-              <NotificationsActive sx={{ fontSize: 40, color: '#1976d2', mb: 1 }} />
+              {/* Removed NotificationsActive icon */}
               <Typography variant="h4" gutterBottom>{stats.totalDevices}</Typography>
               <Typography variant="subtitle1">Devices in Your Office</Typography>
             </Paper>
