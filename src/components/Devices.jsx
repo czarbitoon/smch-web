@@ -318,39 +318,37 @@ const Devices = () => {
               <Grid item xs={12} sm={6} md={4} key={device.id}>
                 <Paper 
                   elevation={3} 
-                  sx={{ 
-                    p: 2, 
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
+                  sx={{
+                    p: 3,
+                    height: '100%',
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: 3,
                     '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 6
+                      boxShadow: 6,
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.3s ease'
                     }
                   }}
-                  onClick={() => handleDeviceCardClick(device)}
                 >
                   {/* Device Image */}
-                  <Box sx={{ mb: 2, overflow: 'hidden', borderRadius: 1, height: 140 }}>
-                    <Box
-                      component="img"
-                      src={device.image_url || 'https://via.placeholder.com/400x200?text=No+Image'}
-                      alt={device.name}
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        borderRadius: 1,
-                        boxShadow: 1,
-                        transition: 'transform 0.3s ease',
-                        '&:hover': {
-                          transform: 'scale(1.05)'
-                        }
-                      }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
-                      }}
-                    />
+                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+                    {device.image_url ? (
+                      <img
+                        src={device.image_url.startsWith('/images/') ? `http://127.0.0.1:8000${device.image_url}` : device.image_url}
+                        alt={device.name}
+                        style={{ width: '100%', maxHeight: 100, objectFit: 'cover', borderRadius: 8 }}
+                        onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/400x200?text=No+Image'; }}
+                      />
+                    ) : (
+                      <img
+                        src={'https://via.placeholder.com/400x200?text=No+Image'}
+                        alt="No Image"
+                        style={{ width: '100%', maxHeight: 100, objectFit: 'cover', borderRadius: 8 }}
+                      />
+                    )}
                   </Box>
                   
                   <Typography variant="h6" gutterBottom>

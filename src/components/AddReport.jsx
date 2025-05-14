@@ -81,17 +81,14 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
       
       // Add the image if one was selected
       if (reportImage) {
-        formData.append('report_image', reportImage);
-      }
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setSnackbar({
-          open: true,
-          message: 'Please log in to submit a report',
-          severity: 'error'
-        });
-        return;
+        // Upload image to new backend endpoint first
+        const imgForm = new FormData();
+        imgForm.append('image', reportImage);
+        imgForm.append('folder', 'report_images');
+        const imgRes = await axios.post('/api/images/upload', imgForm, { headers: { 'Content-Type': 'multipart/form-data' } });
+        if (imgRes.data && imgRes.data.path) {
+          formData.append('report_image', imgRes.data.path);
+        }
       }
 
       // Set the authorization header for the reportService

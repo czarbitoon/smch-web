@@ -183,7 +183,14 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
       
       // Add the image if one was selected
       if (deviceImage) {
-        formData.append('device_image', deviceImage);
+        // Upload image to new backend endpoint first
+        const imgForm = new FormData();
+        imgForm.append('image', deviceImage);
+        imgForm.append('folder', 'devices');
+        const imgRes = await axios.post('/api/images/upload', imgForm, { headers: { 'Content-Type': 'multipart/form-data' } });
+        if (imgRes.data && imgRes.data.path) {
+          formData.append('image', imgRes.data.path);
+        }
       }
 
       const response = await axios.post('/api/devices', formData, {
