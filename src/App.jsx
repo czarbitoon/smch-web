@@ -5,13 +5,14 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import ErrorFallback from './components/ErrorFallback';
-import Pusher from 'pusher-js';
+// import Pusher from 'pusher-js';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Lazy load components
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Devices = lazy(() => import('./pages/Devices'));
-
+const Devices = lazy(() => import('./pages/DevicesPage'));
 const Settings = lazy(() => import('./pages/Settings'));
 
 // Loading component
@@ -41,11 +42,8 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-const App = () => {
+function App() {
   const { isAuthenticated, isLoading, user } = useAuth();
-
-  React.useEffect(() => {
-
 
   // Prefetch components on app load
   React.useEffect(() => {
@@ -54,7 +52,6 @@ const App = () => {
         () => import('./pages/Login'),
         () => import('./pages/Dashboard'),
         () => import('./pages/Devices'),
-
         () => import('./pages/Settings'),
       ];
       components.forEach(component => {
@@ -103,7 +100,6 @@ const App = () => {
             >
               <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
               <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-      
               <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
             <Route
@@ -116,7 +112,6 @@ const App = () => {
             >
               <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
               <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-      
               <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
             <Route
@@ -129,7 +124,6 @@ const App = () => {
             >
               <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
               <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-      
               <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
             </Route>
           </Routes>
@@ -138,6 +132,5 @@ const App = () => {
       </BrowserRouter>
     </ErrorBoundary>
   );
-};
-
+}
 export default App;

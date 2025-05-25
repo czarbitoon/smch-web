@@ -54,8 +54,6 @@ const Devices = () => {
   const isAdmin = userRole === 'admin';
   const isStaff = userRole === 'staff';
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const isAdmin = Number(userType) >= 2;
-  const isStaff = Number(userType) === 1;
 
   // Handle device card click to open report form
   const handleDeviceCardClick = (device) => {

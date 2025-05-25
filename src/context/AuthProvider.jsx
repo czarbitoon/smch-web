@@ -15,11 +15,15 @@ const AuthProvider = ({ children }) => {
     setLoading(true);
 
     try {
+        await axios.post('/api/logout');
         localStorage.removeItem('token');
         setIsAuthenticated(false);
         setUserRole('user');  // Reset role to 'user' on logout
         setUser(null); // Reset user on logout
     } catch (error) {
+        setIsAuthenticated(false);
+        setUserRole('user');
+        setUser(null);
         console.error('Logout failed:', error);
     } finally {
         setLoading(false);
