@@ -32,19 +32,15 @@ function UserDashboard() {
 
         // Handle potential nested user object structures
         const userData = profileRes.data.user || profileRes.data;
-        
-        // Check user type (0=user, 1=staff, 2=admin, 3=superadmin)
-        const userType = userData.type || 0;
-        
-        // Redirect based on user type
-        if (userType === 1) {
+        // Use user_role string for routing
+        const userRole = userData.user_role || 'user';
+        if (userRole === 'staff') {
           navigate('/staff/dashboard');
           return;
-        } else if (userType === 2 || userType === 3) {
+        } else if (userRole === 'admin' || userRole === 'superadmin') {
           navigate('/admin/dashboard');
           return;
         }
-
         setUser(userData);
         // Then get the stats for regular user
         const statsRes = await axios.get('/api/user/stats');

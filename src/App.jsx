@@ -43,7 +43,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, userRole } = useAuth();
 
   // Prefetch components on app load
   React.useEffect(() => {
@@ -63,11 +63,11 @@ function App() {
     prefetchComponents();
   }, []);
 
-  // Modern home route logic: redirect to dashboard based on user type
+  // Modern home route logic: redirect to dashboard based on user role
   const getDashboardRoute = () => {
     if (!user) return '/login';
-    if (user.type === 2 || user.type === 3) return '/admin/dashboard';
-    if (user.type === 1) return '/staff/dashboard';
+    if (user.role === 'admin' || user.role === 'superadmin') return '/admin/dashboard';
+    if (user.role === 'staff') return '/staff/dashboard';
     return '/user/dashboard';
   };
 

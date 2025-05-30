@@ -7,9 +7,49 @@ export const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState('user'); // Initialize with 'user' for regular user
+  const [userRole, setUserRole] = useState(null); // Initialize with null, will be set from backend
   const [officeId, setOfficeId] = useState(null);
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+
+  const login = async (email, password) => {
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/login', { email, password });
+      const { access_token, user_role } = response.data;
+      
+      if (access_token) {
+        localStorage.setItem('token', access_token);
+        setToken(access_token);
+        setIsAuthenticated(true);
+        
+        // Fetch user profile to get complete user data
+        const profileRes = await axios.get('/api/profile', {
+          headers: { Authorization: `Bearer ${access_token}` }
+        });
+        
+        const userData = profileRes.data;
+        const role = userData.role || user_role || 'user';
+        
+        setUserRole(role);
+        setOfficeId(userData.office_id);
+        setUser({ ...userData, role });
+        
+        return { success: true, user: userData, role };
+      } else {
+        throw new Error('No access token received');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setUser(null);
+      setToken(null);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const logout = async () => { 
     setLoading(true);
@@ -18,12 +58,14 @@ const AuthProvider = ({ children }) => {
         await axios.post('/api/logout');
         localStorage.removeItem('token');
         setIsAuthenticated(false);
-        setUserRole('user');  // Reset role to 'user' on logout
+        setUserRole(null);  // Reset role to null on logout
         setUser(null); // Reset user on logout
+        setToken(null);
     } catch (error) {
         setIsAuthenticated(false);
-        setUserRole('user');
+        setUserRole(null);
         setUser(null);
+        setToken(null);
         console.error('Logout failed:', error);
     } finally {
         setLoading(false);
@@ -34,28 +76,28 @@ const AuthProvider = ({ children }) => {
     let isMounted = true;
 
     const checkSession = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken) {
         if (isMounted) {
           setIsAuthenticated(false);
-          setUserRole('user'); // Ensure default role is 'user'
+          setUserRole(null);
+          setToken(null);
           setLoading(false);
         }
         return;
       }
 
+      setToken(storedToken);
+
       try {
         const response = await axios.get('/api/profile');
 
-        if (isMounted) {
-          setIsAuthenticated(response.status === 200);
-          // Map numeric type to role string
-          let role = 'user';
-          const typeValue = response.data?.type;
-          if (typeValue === 2 || typeValue === 3) role = 'admin';
-          else if (typeValue === 1) role = 'staff';
+        if (isMounted && response.status === 200) {
+          setIsAuthenticated(true);
+          // Use backend-provided role string directly
+          const role = response.data?.role || response.data?.user_role || 'user';
           setUserRole(role);
-          setOfficeId(response.data.office_id);
+          setOfficeId(response.data?.office_id);
           setUser({ ...response.data, role }); // Store the full user object with role
         }
       } catch (error) {
@@ -63,8 +105,9 @@ const AuthProvider = ({ children }) => {
 
         if (isMounted) {
           setIsAuthenticated(false);
-          setUserRole('user'); // Set to default role instead of null
+          setUserRole(null);
           setUser(null);
+          setToken(null);
           localStorage.removeItem('token');
         }
       } finally {
@@ -86,13 +129,16 @@ const AuthProvider = ({ children }) => {
   return ( 
     <AuthContext.Provider value={{ 
       isAuthenticated, 
-      setIsAuthenticated, 
+      setIsAuthenticated,
+      login,
       logout,
       userRole,
       setUserRole,
       officeId,
       user,
-      setUser
+      setUser,
+      token,
+      loading
     }}>
       {children}
     </AuthContext.Provider>

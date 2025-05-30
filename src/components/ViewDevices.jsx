@@ -7,7 +7,7 @@ import { AuthContext } from '../context/AuthProvider';
 const ViewDevices = () => {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { userType, officeId } = useContext(AuthContext);
+  const { userRole, officeId } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -38,7 +38,9 @@ const ViewDevices = () => {
     <Container maxWidth="md">
       <Box mt={4}>
         <Typography variant="h4" gutterBottom>
-          {Number(userType) >= 2 ? 'All Devices' : `Devices in Your Office (ID: ${officeId})`}
+          {userRole === 'admin' || userRole === 'superadmin'
+            ? 'All Devices'
+            : 'Devices in Your Office'}
         </Typography>
         <List>
           {devices.map(device => (
