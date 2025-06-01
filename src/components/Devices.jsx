@@ -374,7 +374,6 @@ const Devices = () => {
                     Type: {device.type?.name || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Subcategory: {device.subcategory?.name || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary" gutterBottom>
                     Office: {device.office?.name || 'N/A'}

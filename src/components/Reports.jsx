@@ -308,9 +308,3 @@ const Reports = () => {
 };
 
 export default Reports;
-
-// For admin controls in report history
-const isAdmin = userRole === 'admin';
-const isStaff = userRole === 'staff';
-
-Use isAdmin or isStaff for permission checks and UI rendering

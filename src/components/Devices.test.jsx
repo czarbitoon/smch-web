@@ -8,8 +8,8 @@ const mock = new MockAdapter(axios);
 
 describe('Devices Component', () => {
   const devicesMock = [
-    { id: 1, name: 'PC-1', status: 'active', office: { name: 'Lab A' }, image_url: '', subcategory: { device_type: { device_category: { name: 'Computer' }, name: 'Desktop' }, name: 'Standard' } },
-    { id: 2, name: 'Printer-1', status: 'maintenance', office: { name: 'Lab B' }, image_url: '', subcategory: { device_type: { device_category: { name: 'Printer' }, name: 'Laser' }, name: 'HP' } }
+    { id: 1, name: 'PC-1', status: 'active', office: { name: 'Lab A' }, image_url: '' },
+    { id: 2, name: 'Printer-1', status: 'maintenance', office: { name: 'Lab B' }, image_url: '' }
   ];
 
   beforeEach(() => {

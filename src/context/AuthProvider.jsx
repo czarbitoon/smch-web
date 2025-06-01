@@ -6,14 +6,14 @@ export const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState(null); // Initialize with null, will be set from backend
   const [officeId, setOfficeId] = useState(null);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
   const login = async (email, password) => {
-    setLoading(true);
+    setIsLoading(true);
     try {
       const response = await axios.post('/api/login', { email, password });
       const { access_token, user_role } = response.data;
@@ -47,12 +47,12 @@ const AuthProvider = ({ children }) => {
       setToken(null);
       throw error;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const logout = async () => { 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
         await axios.post('/api/logout');
@@ -68,7 +68,7 @@ const AuthProvider = ({ children }) => {
         setToken(null);
         console.error('Logout failed:', error);
     } finally {
-        setLoading(false);
+        setIsLoading(false);
     }
   };
 
@@ -82,7 +82,7 @@ const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setUserRole(null);
           setToken(null);
-          setLoading(false);
+          setIsLoading(false);
         }
         return;
       }
@@ -111,7 +111,7 @@ const AuthProvider = ({ children }) => {
           localStorage.removeItem('token');
         }
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -122,7 +122,7 @@ const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -138,7 +138,7 @@ const AuthProvider = ({ children }) => {
       user,
       setUser,
       token,
-      loading
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>

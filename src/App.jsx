@@ -10,10 +10,14 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Lazy load components
-const Login = lazy(() => import('./pages/Login'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Devices = lazy(() => import('./pages/DevicesPage'));
-const Settings = lazy(() => import('./pages/Settings'));
+const Login = lazy(() => import('./components/Login'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const StaffDashboard = lazy(() => import('./components/StaffDashboard'));
+const UserDashboard = lazy(() => import('./components/UserDashboard'));
+const Devices = lazy(() => import('./components/Devices'));
+const Reports = lazy(() => import('./components/Reports'));
+const Settings = lazy(() => import('./components/Settings'));
+const Office = lazy(() => import('./components/Office'));
 
 // Loading component
 const LoadingScreen = () => (
@@ -49,10 +53,11 @@ function App() {
   React.useEffect(() => {
     const prefetchComponents = () => {
       const components = [
-        () => import('./pages/Login'),
-        () => import('./pages/Dashboard'),
-        () => import('./pages/Devices'),
-        () => import('./pages/Settings'),
+        () => import('./components/Login'),
+        () => import('./components/Office'),
+        () => import('./components/Devices'),
+        () => import('./components/Settings'),
+        () => import('./components/Reports'),
       ];
       components.forEach(component => {
         setTimeout(() => {
@@ -73,7 +78,12 @@ function App() {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Suspense fallback={<LoadingScreen />}> 
           <Routes>
             <Route
@@ -90,42 +100,49 @@ function App() {
                 isLoading ? <LoadingScreen /> : <Navigate to={getDashboardRoute()} replace />
               }
             />
+            <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/staff/dashboard" element={<ProtectedRoute><StaffDashboard /></ProtectedRoute>} />
+            <Route path="/user/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
             <Route
-              path="/admin/dashboard"
+              path="/devices"
               element={
                 <ProtectedRoute>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
-              <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-              <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
+              <Route index element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
             </Route>
             <Route
-              path="/staff/dashboard"
+              path="/reports"
               element={
                 <ProtectedRoute>
-                  <Layout />
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Reports />
+                  </Suspense>
                 </ProtectedRoute>
               }
-            >
-              <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
-              <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-              <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
-            </Route>
+            />
             <Route
-              path="/user/dashboard"
+              path="/settings"
               element={
                 <ProtectedRoute>
-                  <Layout />
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Settings />
+                  </Suspense>
                 </ProtectedRoute>
               }
-            >
-              <Route index element={<Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>} />
-              <Route path="devices" element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
-              <Route path="settings" element={<Suspense fallback={<LoadingScreen />}><Settings /></Suspense>} />
-            </Route>
+            />
+            <Route
+              path="/offices"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Office />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Suspense>
         <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />

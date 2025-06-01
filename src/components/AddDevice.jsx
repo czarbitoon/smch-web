@@ -14,7 +14,6 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
   const [subcategories, setSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  // Removed: const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [deviceImage, setDeviceImage] = useState(null);
   const [deviceImagePreview, setDeviceImagePreview] = useState('');
   const [imageLoading, setImageLoading] = useState(false);
@@ -40,7 +39,6 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
       fetchSubcategories(selectedType);
     } else {
       setSubcategories([]);
-      setSelectedSubcategory('');
     }
   }, [selectedType]);
 
@@ -179,7 +177,6 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
       formData.append('office_id', officeId);
       formData.append('category_id', selectedCategory);
       formData.append('type_id', selectedType);
-      formData.append('subcategory_id', selectedSubcategory);
       
       // Add the image if one was selected
       if (deviceImage) {
@@ -221,7 +218,6 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
     setOfficeId('');
     setSelectedCategory('');
     setSelectedType('');
-    setSelectedSubcategory('');
     setDeviceImage(null);
     setDeviceImagePreview('');
     onClose && onClose();
@@ -348,22 +344,7 @@ function AddDevice({ open, onClose, onSuccess, isStandalone = false }) {
           </Select>
         </FormControl>
       )}
-      {selectedType && (
-        <FormControl fullWidth margin="normal" required>
-          <InputLabel>Subcategory</InputLabel>
-          <Select
-            value={selectedSubcategory}
-            label="Subcategory"
-            onChange={(e) => setSelectedSubcategory(e.target.value)}
-          >
-            {subcategories.map((subcategory) => (
-              <MenuItem key={subcategory.id} value={subcategory.id}>
-                {subcategory.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      )}
+
     </>
   );
   
