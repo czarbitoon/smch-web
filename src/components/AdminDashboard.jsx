@@ -1,15 +1,14 @@
-import { useEffect, useState, useContext } from 'react';
-import { CContainer, CCard, CCardBody, CCardHeader, CButton, CAvatar, CRow, CCol, CSpinner, CWidgetStatsF } from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import { cilPeople, cilDevices, cilSpreadsheet, cilBuilding } from '@coreui/icons';
-import { Logo } from './Logo';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Container, Typography, Box, Button, Avatar, Grid, Paper, CircularProgress, Alert } from '@mui/material';
+import { Assessment, Build, Report, People, Logout } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import ProfilePictureUpload from './ProfilePictureUpload';
 import axios from '../axiosInstance';
-import { AuthContext } from '../context/AuthProvider';
 
 function AdminDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [stats, setStats] = useState({
     users: 0,
     devices: 0,
@@ -17,211 +16,296 @@ function AdminDashboard() {
     offices: 0
   });
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext);
 
   useEffect(() => {
-    let isMounted = true;
-
     const fetchDashboardData = async () => {
-      if (!localStorage.getItem('token')) {
-        navigate('/login');
-        return;
-      }
-      
+      setLoading(true);
       try {
         const [profileRes, statsRes] = await Promise.all([
           axios.get('/api/profile'),
           axios.get('/api/admin/stats')
         ]);
-        if (isMounted) {
-          setUser(profileRes.data.user);
-          setStats(statsRes.data);
+        setUser(profileRes.data.user);
+        // Handle different response shapes like mobile app
+        if (statsRes.data && typeof statsRes.data === 'object') {
+          if (statsRes.data.stats) {
+            setStats({
+              users: statsRes.data.stats.users ?? 0,
+              devices: statsRes.data.stats.devices ?? 0,
+              reports: statsRes.data.stats.reports ?? 0,
+              offices: statsRes.data.stats.offices ?? 0,
+            });
+          } else {
+            setStats({
+              users: statsRes.data.users ?? statsRes.data.totalUsers ?? 0,
+              devices: statsRes.data.devices ?? statsRes.data.totalDevices ?? 0,
+              reports: statsRes.data.reports ?? statsRes.data.totalReports ?? 0,
+              offices: statsRes.data.offices ?? statsRes.data.totalOffices ?? 0,
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        if (isMounted) {
-          navigate('/login');
-        }
+        setError('Failed to load dashboard data');
+        setLoading(false);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchDashboardData();
-
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
-    
-    // Cleanup function
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
   }, [navigate]);
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await axios.post('/api/logout');
+      localStorage.removeItem('token');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
   };
 
   if (loading) {
-    return <CSpinner />;
+    return (
+      <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <CircularProgress size={60} />
+      </Container>
+    );
   }
 
   return (
-    <CContainer>
-      <CCard>
-        <CCardHeader>
-          <h4>Admin Dashboard</h4>
-        </CCardHeader>
-        <CCardBody>
-          {/* Profile Section */}
-          {user && (
-            <CRow className="mb-4">
-              <CCol xs={12} className="text-center">
-                <Logo />
-                <h5>{user.name}</h5>
-                <p>{user.email}</p>
-              </CCol>
-            </CRow>
-          )}
-          {/* Quick Access Buttons */}
-          <CRow className="mb-4">
-            <CCol xs={12} md={4} className="mb-3">
-              <CRow>
-                <CCol xs={12} className="mb-2">
-                  <CButton color="primary" className="w-100" component={Link} to="/admin/devices">
-                    <CIcon icon={cilDevices} className="me-2" />
-                    Manage Devices
-                  </CButton>
-                </CCol>
-                <CCol xs={12}>
-                  <CButton color="success" className="w-100" component={Link} to="/admin/devices/add">
-                    <CIcon icon={cilDevices} className="me-2" />
-                    Add New Device
-                  </CButton>
-                </CCol>
-              </CRow>
-            </CCol>
-            <CCol xs={12} md={4} className="mb-3">
-              <CButton color="success" className="w-100" component={Link} to="/admin/reports">
-                <CIcon icon={cilSpreadsheet} className="me-2" />
-                View Reports
-              </CButton>
-            </CCol>
-            <CCol xs={12} md={4} className="mb-3">
-              <CButton color="info" className="w-100" component={Link} to="/offices">
-                <CIcon icon={cilBuilding} className="me-2" />
-                Manage Offices
-              </CButton>
-            </CCol>
-          </CRow>
-          {/* Logout Button */}
-          <CRow className="mb-4">
-            <CCol xs={12} className="text-center">
-              <CButton color="danger" onClick={handleLogout}>
-                Logout
-              </CButton>
-            </CCol>
-          </CRow>
+    <Container maxWidth="lg" sx={{ py: 3, backgroundColor: '#f4f6fa', minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, px: 1 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', letterSpacing: 0.5 }}>
+          Admin Dashboard
+        </Typography>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleLogout}
+          startIcon={<Logout />}
+          sx={{
+            borderRadius: 2.5,
+            px: 3,
+            py: 1,
+            fontWeight: 'bold',
+            boxShadow: '0 2px 4px rgba(229, 57, 53, 0.12)'
+          }}
+        >
+          Logout
+        </Button>
+      </Box>
 
-          {/* Stats Widgets */}
-          <CRow className="mb-4">
-            <CCol xs={12} sm={6} lg={3}>
-              <CWidgetStatsF
-                className="mb-3"
-                icon={<CIcon icon={cilPeople} height={24} />}
-                title="Total Users"
-                value={stats.users}
-                color="primary"
-              />
-            </CCol>
-            <CCol xs={12} sm={6} lg={3}>
-              <CWidgetStatsF
-                className="mb-3"
-                icon={<CIcon icon={cilDevices} height={24} />}
-                title="Total Devices"
-                value={stats.devices}
-                color="info"
-              />
-            </CCol>
-            <CCol xs={12} sm={6} lg={3}>
-              <CWidgetStatsF
-                className="mb-3"
-                icon={<CIcon icon={cilSpreadsheet} height={24} />}
-                title="Active Reports"
-                value={stats.reports}
-                color="warning"
-              />
-            </CCol>
-            <CCol xs={12} sm={6} lg={3}>
-              <CWidgetStatsF
-                className="mb-3"
-                icon={<CIcon icon={cilBuilding} height={24} />}
-                title="Total Offices"
-                value={stats.offices}
-                color="success"
-              />
-            </CCol>
-          </CRow>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
-          {/* Quick Actions */}
-          <CRow>
-            <CCol xs={12} md={6}>
-              <CCard>
-                <CCardBody>
-                  <h6>Manage Offices</h6>
-                  <p>Add, update, or remove offices.</p>
-                  <div className="d-flex gap-2">
-                    <Link to="/offices">
-                      <CButton color="primary">Go to Offices</CButton>
-                    </Link>
-                    <Link to="/offices/add">
-                      <CButton color="success">Add Office</CButton>
-                    </Link>
-                  </div>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} md={6}>
-              <CCard>
-                <CCardBody>
-                  <h6>Manage Devices</h6>
-                  <p>Add, update, or remove devices.</p>
-                  <div className="d-flex gap-2">
-                    <Link to="/devices">
-                      <CButton color="primary">Go to Devices</CButton>
-                    </Link>
-                    <Link to="/devices/add">
-                      <CButton color="success">Add Device</CButton>
-                    </Link>
-                    <Link to="/reports">
-                      <CButton color="primary">Go to Reports</CButton>
-                    </Link>
-                  </div>
-                </CCardBody>
-              </CCard>
-            </CCol>
-          </CRow>
+      {/* Profile Card */}
+      {user && (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            borderRadius: 3, 
+            textAlign: 'center',
+            backgroundColor: '#fff',
+            boxShadow: '0 3px 8px rgba(0,0,0,0.10)'
+          }}
+        >
+          <Avatar
+            src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : undefined}
+            sx={{ 
+              width: 72, 
+              height: 72, 
+              mx: 'auto', 
+              mb: 2,
+              backgroundColor: '#90caf9'
+            }}
+          >
+            {!user.profile_picture && user.name?.charAt(0)}
+          </Avatar>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+            {user.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user.email}
+          </Typography>
+        </Paper>
+      )}
 
-          {/* User Management Section */}
-          <CRow className="mt-4">
-            <CCol xs={12}>
-              <CCard>
-                <CCardBody>
-                  <h6>User Management</h6>
-                  <p>Add and manage system users.</p>
-                  <Link to="/admin/register">
-                    <CButton color="success">Add User</CButton>
-                  </Link>
-                </CCardBody>
-              </CCard>
-            </CCol>
-          </CRow>
-        </CCardBody>
-      </CCard>
-    </CContainer>
+      {/* Stats Widgets */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={6} md={3}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 3,
+              backgroundColor: '#e3e7fa',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Users
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+              {stats.users}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 3,
+              backgroundColor: '#e3e7fa',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Devices
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+              {stats.devices}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 3,
+              backgroundColor: '#e3e7fa',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Reports
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+              {stats.reports}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              borderRadius: 3,
+              backgroundColor: '#e3e7fa',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Offices
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+              {stats.offices}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Menu Section */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/devices')}
+            startIcon={<Build />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Devices
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/offices')}
+            startIcon={<Assessment />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Offices
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/reports')}
+            startIcon={<Report />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Reports
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/users')}
+            startIcon={<People />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Users
+          </Button>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
 

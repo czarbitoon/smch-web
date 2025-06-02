@@ -127,102 +127,159 @@ const Reports = () => {
     setResolveDialogOpen(true);
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'resolved': return '#4caf50';
+      case 'pending': return '#ff9800';
+      case 'repair': return '#2196f3';
+      case 'decommissioned': return '#f44336';
+      default: return '#757575';
+    }
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <IconButton aria-label="Back" onClick={() => navigate(-1)} sx={{ mr: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, '&:hover': { bgcolor: 'grey.100' } }}>
-            <ArrowBackIosNewIcon fontSize="medium" />
+    <Container maxWidth="lg" sx={{ py: 3, backgroundColor: '#f4f6fa', minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, px: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <IconButton 
+            onClick={() => navigate(-1)} 
+            sx={{ 
+              bgcolor: '#fff', 
+              borderRadius: 2, 
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              '&:hover': { bgcolor: '#f5f5f5' }
+            }}
+          >
+            <ArrowBackIosNewIcon fontSize="medium" color="primary" />
           </IconButton>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#222' }}>
             Reports
           </Typography>
-        </Stack>
+        </Box>
         <Button
           variant="contained"
-          color="primary"
           onClick={() => setIsAddModalOpen(true)}
           sx={{
-            textTransform: 'none',
-            fontWeight: 500,
+            borderRadius: 2.5,
             px: 3,
-            py: 1,
-            borderRadius: 1.5
+            py: 1.5,
+            fontWeight: 'bold',
+            textTransform: 'none',
+            boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)'
           }}
         >
           Add Report
         </Button>
-      </Stack>
-      <Box sx={{ mt: 2 }}>
-        <List sx={{ '& .MuiListItem-root': { px: 0, py: 1 } }}>
-          {reports.map(report => (
-            <ListItem key={report.id} button onClick={() => navigate(`/reports/${report.id}`)}>
-              <Paper 
-                elevation={1} 
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Reports Grid */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2, mb: 4 }}>
+        {reports.map(report => {
+          const statusColor = getStatusColor(report.status || (report.resolved_by ? 'resolved' : 'pending'));
+          return (
+            <Paper
+              key={report.id}
+              elevation={0}
+              onClick={() => navigate(`/reports/${report.id}`)}
+              sx={{
+                p: 2.5,
+                borderRadius: 3.5,
+                cursor: 'pointer',
+                backgroundColor: '#f9f9f9',
+                border: `2px solid ${statusColor}`,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                transition: 'all 0.2s ease',
+                minHeight: 140,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              {/* Report Title */}
+              <Typography 
+                variant="h6" 
                 sx={{ 
-                  p: 3, 
-                  width: '100%',
-                  borderRadius: 2,
-                  '&:hover': {
-                    boxShadow: 2
-                  }
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  color: '#222',
+                  mb: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
                 }}
               >
-                <Box>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500 }}>
-                      {report.title}
-                    </Typography>
-                    <Chip
-                      label={report.status ? (report.status.charAt(0).toUpperCase() + report.status.slice(1)) : (report.resolved_by ? 'Resolved' : 'Pending')}
-                      color={report.status === 'resolved' || report.resolved_by ? 'success' : report.status === 'pending' ? 'warning' : report.status === 'repair' ? 'info' : report.status === 'decommissioned' ? 'error' : 'default'}
-                      size="small"
-                    />
-                  </Stack>
-                  <Typography variant="body1" paragraph>
-                    {report.description}
+                {report.title}
+              </Typography>
+              
+              {/* Status */}
+              <Typography 
+                variant="body2"
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 'bold',
+                  color: statusColor,
+                  textTransform: 'capitalize',
+                  mb: 1
+                }}
+              >
+                {report.status || (report.resolved_by ? 'Resolved' : 'Pending')}
+              </Typography>
+              
+              {/* Description */}
+              <Typography 
+                variant="body2"
+                sx={{
+                  fontSize: '0.8125rem',
+                  color: '#444',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  flexGrow: 1
+                }}
+              >
+                {report.description}
+              </Typography>
+              
+              {/* Additional Info */}
+              <Box sx={{ mt: 'auto', pt: 1 }}>
+                {report.device && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.75rem' }}>
+                    Device: {report.device.name || report.device_id}
                   </Typography>
-                  {report.device && (
-                    <Typography variant="body2" color="text.secondary">
-                      Device: {report.device.name || report.device_id}
-                    </Typography>
-                  )}
-                  {report.office && (
-                    <Typography variant="body2" color="text.secondary">
-                      Office: {report.office.name || report.office_id}
-                    </Typography>
-                  )}
-                  {report.image_url && (
-                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Image:
-                      </Typography>
-                      <Box>
-                        <img src={report.image_url} alt="Report" style={{ width: 220, height: 180, borderRadius: 8, objectFit: 'cover' }} />
-                      </Box>
-                    </Box>
-                  )}
-                  {report.created_at && (
-                    <Typography variant="body2" color="text.secondary">
-                      Created: {new Date(report.created_at).toLocaleString()}
-                    </Typography>
-                  )}
-                  {report.resolved_by && (
-                    <Typography variant="body2" color="text.secondary">
-                      Resolved By: {report.resolved_by_user?.name || report.resolved_by_user?.email || report.resolved_by || 'Unknown'}
-                    </Typography>
-                  )}
-                  {report.resolution_notes && (
-                    <Typography variant="body2" color="text.secondary">
-                      Resolution Notes: {report.resolution_notes}
-                    </Typography>
-                  )}
-                </Box>
-              </Paper>
-            </ListItem>
-          ))}
-        </List>
+                )}
+                {report.created_at && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.75rem' }}>
+                    {new Date(report.created_at).toLocaleDateString()}
+                  </Typography>
+                )}
+              </Box>
+            </Paper>
+          );
+        })}
       </Box>
+
+      {reports.length === 0 && !loading && (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="text.secondary">
+            No reports found
+          </Typography>
+        </Box>
+      )}
 
       <Dialog
         open={resolveDialogOpen}

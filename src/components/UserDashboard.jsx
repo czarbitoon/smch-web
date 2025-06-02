@@ -1,135 +1,186 @@
-// src/components/UserDashboard.jsx
-
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Alert, Container, Typography, Box, Button, Avatar, Grid, Paper } from '@mui/material';
-import { Assignment, History } from '@mui/icons-material';
+import { Container, Typography, Box, Button, Avatar, Grid, Paper, CircularProgress, Alert } from '@mui/material';
+import { Build, Report, Person, Logout } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import ProfilePictureUpload from './ProfilePictureUpload';
-import axios from '../axiosInstance'; // Import the custom Axios instance
+import axios from '../axiosInstance';
 
 function UserDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [stats, setStats] = useState({
-    totalDevices: 0
-  });
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true);
-      setError('');
-
       try {
-        // First get the profile to determine the role
         const profileRes = await axios.get('/api/profile');
+        setUser(profileRes.data.user);
         
-        // Ensure we have valid user data and handle nested structures
-        if (!profileRes.data) {
-          throw new Error('No data received from server');
+        // Check user role and redirect if necessary
+        const userRole = profileRes.data.user.user_type || profileRes.data.user.role;
+        if (userRole >= 2) {
+          navigate('/admin-dashboard');
         }
-
-        // Handle potential nested user object structures
-        const userData = profileRes.data.user || profileRes.data;
-        // Use user_role string for routing
-        const userRole = userData.user_role || 'user';
-        if (userRole === 'staff') {
-          navigate('/staff/dashboard');
-          return;
-        } else if (userRole === 'admin' || userRole === 'superadmin') {
-          navigate('/admin/dashboard');
-          return;
-        }
-        setUser(userData);
-        // Then get the stats for regular user
-        const statsRes = await axios.get('/api/user/stats');
-        setStats(statsRes.data);
-        setLoading(false);
       } catch (error) {
-        setError(error.message || 'Failed to fetch user data. Redirecting to login.');
+        console.error('Error fetching user data:', error);
+        setError('Failed to load dashboard data');
+      } finally {
         setLoading(false);
-        setTimeout(() => navigate('/login'), 3000);
       }
     };
 
-    fetchUserData();
-
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchUserData, 30000);
-    return () => clearInterval(interval);
+    fetchDashboardData();
   }, [navigate]);
 
   const handleLogout = async () => {
     try {
-      await axios.post('/api/logout'); // Call the logout API
-      localStorage.removeItem('token'); // Remove token from localStorage
-      navigate('/login'); // Redirect to login
+      await axios.post('/api/logout');
+      localStorage.removeItem('token');
+      navigate('/login');
     } catch (error) {
       console.error('Logout Error:', error);
     }
   };
 
   if (loading) {
-    return <CircularProgress />; // Show loading indicator
+    return (
+      <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <CircularProgress size={60} />
+      </Container>
+    );
   }
+
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ marginTop: 4, textAlign: 'center' }}>
-        {error && <Alert severity="error">{error}</Alert>} {/* Error Message */}
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ py: 3, backgroundColor: '#f4f6fa', minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, px: 1 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', letterSpacing: 0.5 }}>
           User Dashboard
         </Typography>
-        {/* Profile Section */}
-        {user && (
-          <Paper elevation={3} sx={{ padding: 3, marginBottom: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-              <Avatar
-                src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : 'https://ui-avatars.com/api/?name=User&size=128'}
-                sx={{ width: 100, height: 100 }}
-              />
-              <Box>
-                <Typography variant="h6">{user.name}</Typography>
-                <Typography variant="body1" color="textSecondary">{user.email}</Typography>
-              </Box>
-            </Box>
-            <ProfilePictureUpload />
-          </Paper>
-        )}
-        {/* Logout Button */}
-        <Box sx={{ marginBottom: 4 }}>
-          <Button variant="contained" color="secondary" onClick={handleLogout}>
-            Logout
-          </Button>
-        </Box>
-        {/* Statistics Section */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12}>
-            <Paper elevation={3} sx={{ p: 3, textAlign: 'center', bgcolor: '#e3f2fd' }}>
-              {/* Removed NotificationsActive icon */}
-              <Typography variant="h4" gutterBottom>{stats.totalDevices}</Typography>
-              <Typography variant="subtitle1">Devices in Your Office</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-        {/* Quick Actions */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>My Devices</Typography>
-              <Typography variant="body1" paragraph>View and manage your assigned devices.</Typography>
-              <Button variant="contained" color="primary" href="/devices">View Devices</Button>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>My Reports</Typography>
-              <Typography variant="body1" paragraph>Track and manage your submitted reports.</Typography>
-              <Button variant="contained" color="primary" href="/reports">View Reports</Button>
-            </Paper>
-          </Grid>
-        </Grid>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleLogout}
+          startIcon={<Logout />}
+          sx={{
+            borderRadius: 2.5,
+            px: 3,
+            py: 1,
+            fontWeight: 'bold',
+            boxShadow: '0 2px 4px rgba(229, 57, 53, 0.12)'
+          }}
+        >
+          Logout
+        </Button>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Profile Card */}
+      {user && (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            borderRadius: 3, 
+            textAlign: 'center',
+            backgroundColor: '#fff',
+            boxShadow: '0 3px 8px rgba(0,0,0,0.10)'
+          }}
+        >
+          <Avatar
+            src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : undefined}
+            sx={{ 
+              width: 72, 
+              height: 72, 
+              mx: 'auto', 
+              mb: 2,
+              backgroundColor: '#90caf9'
+            }}
+          >
+            {!user.profile_picture && user.name?.charAt(0)}
+          </Avatar>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+            {user.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user.email}
+          </Typography>
+        </Paper>
+      )}
+
+      {/* Menu Section */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/devices')}
+            startIcon={<Build />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Devices
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/reports')}
+            startIcon={<Report />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Reports
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/profile')}
+            startIcon={<Person />}
+            sx={{
+              py: 2,
+              borderRadius: 3,
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
+              '&:hover': {
+                backgroundColor: '#1565c0'
+              }
+            }}
+          >
+            Profile
+          </Button>
+        </Grid>
+      </Grid>
     </Container>
   );
 }

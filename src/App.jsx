@@ -11,6 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Lazy load components
 const Login = lazy(() => import('./components/Login'));
+const Register = lazy(() => import('./components/Register'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const StaffDashboard = lazy(() => import('./components/StaffDashboard'));
 const UserDashboard = lazy(() => import('./components/UserDashboard'));
@@ -91,6 +92,14 @@ function App() {
               element={
                 <Suspense fallback={<LoadingScreen />}> 
                   <Login />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <Suspense fallback={<LoadingScreen />}> 
+                  <Register />
                 </Suspense>
               }
             />

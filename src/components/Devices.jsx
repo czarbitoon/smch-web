@@ -310,105 +310,140 @@ const Devices = () => {
           </Box>
         )}
   {/* Devices Grid */}
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {devices && devices.length > 0 ? (
             devices.map(device => (
-              <Grid item xs={12} sm={6} md={4} key={device.id}>
+              <Grid item xs={12} sm={6} md={4} lg={3} key={device.id}>
                 <Paper 
-                  elevation={3} 
+                  elevation={0}
+                  onClick={() => {
+                    setSelectedDevice(device);
+                    setIsReportDialogOpen(true);
+                  }}
                   sx={{
-                    p: 3,
-                    height: '100%',
-                    borderRadius: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: 3,
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e0e0e0',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      boxShadow: 6,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                       transform: 'translateY(-2px)',
-                      transition: 'all 0.3s ease'
+                      borderColor: '#1976d2'
                     }
                   }}
                 >
                   {/* Device Image */}
-                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
+                  <Box sx={{ 
+                    mb: 2, 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: 140,
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: 2.5,
+                    overflow: 'hidden'
+                  }}>
                     {device.image_url ? (
                       <img
-                        src={device.image_url.startsWith('/images/') ? `http://127.0.0.1:8000${device.image_url}` : device.image_url}
+                        src={device.image_url.startsWith('/images/') ? `${import.meta.env.VITE_API_BASE_URL}${device.image_url}` : device.image_url}
                         alt={device.name}
-                        style={{ width: '100%', maxHeight: 100, objectFit: 'cover', borderRadius: 8 }}
-                        onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/400x200?text=No+Image'; }}
+                        style={{ 
+                          width: '90%', 
+                          height: '90%', 
+                          objectFit: 'cover', 
+                          borderRadius: 10
+                        }}
+                        onError={e => { 
+                          e.target.onerror = null; 
+                          e.target.src = 'https://via.placeholder.com/200x140?text=No+Image'; 
+                        }}
                       />
                     ) : (
                       <img
-                        src={'https://via.placeholder.com/400x200?text=No+Image'}
+                        src={'https://via.placeholder.com/200x140?text=No+Image'}
                         alt="No Image"
-                        style={{ width: '100%', maxHeight: 100, objectFit: 'cover', borderRadius: 8 }}
+                        style={{ 
+                          width: '90%', 
+                          height: '90%', 
+                          objectFit: 'cover', 
+                          borderRadius: 10
+                        }}
                       />
                     )}
                   </Box>
                   
-                  <Typography variant="h6" gutterBottom>
+                  {/* Device Name */}
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontSize: '1.125rem',
+                      fontWeight: 700,
+                      color: '#1976d2',
+                      mb: 0.5,
+                      lineHeight: 1.2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
                     {device.name}
                   </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <Chip 
-                      label={device.status === 'maintenance' ? 'Maintenance' : 
-                             device.status === 'active' ? 'Active' : 
-                             device.status === 'inactive' ? 'Inactive' : device.status} 
-                      color={
-                        device.status === 'active' ? 'success' :
-                        device.status === 'maintenance' ? 'warning' : 'error'
-                      }
-                      size="small"
-                    />
-                  </Box>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    ID: {device.id}
+                  
+                  {/* Device Status */}
+                  <Typography 
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      textTransform: 'capitalize',
+                      color: device.status === 'active' ? '#4caf50' :
+                             device.status === 'maintenance' ? '#ff9800' : '#f44336',
+                      mb: 1
+                    }}
+                  >
+                    {device.status || 'Unknown'}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Category: {device.category?.name || 'N/A'}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Type: {device.type?.name || 'N/A'}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Office: {device.office?.name || 'N/A'}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                    {!selectedDevice && (
-                      <Button 
-                        variant="contained" 
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click event
-                          setSelectedDevice(device);
-                        }}
-                      >
-                        Log Issue
-                      </Button>
-                    )}
+
+                  {/* Action Buttons */}
+                  <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
                     <Button 
-                      variant="outlined" 
+                      variant="contained" 
                       size="small"
+                      fullWidth
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent card click event
-                        getDeviceStatus(device.id);
+                        e.stopPropagation();
+                        setSelectedDevice(device);
+                        setIsReportDialogOpen(true);
+                      }}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.75rem'
                       }}
                     >
-                      Refresh Status
+                      Report Issue
                     </Button>
                     {(isAdmin || isStaff) && (
                       <Button 
                         variant="outlined" 
-                        color="secondary"
                         size="small"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click event
+                          e.stopPropagation();
                           handleEditClick(device);
+                        }}
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          minWidth: 'auto',
+                          px: 1.5
                         }}
                       >
                         Edit
