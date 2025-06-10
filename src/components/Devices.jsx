@@ -22,13 +22,75 @@ import {
   DialogActions,
   Alert
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import AddDevice from './AddDevice';
 import AddReport from './AddReport';
 import { AuthContext } from '../context/AuthProvider';
 import axios from '../axiosInstance';
 
+// Helper to get full image URL from storage path (aligned with mobile)
+const getDeviceImageUrl = (imgPath) => {
+  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/?api\/?$/, '') || 'http://localhost:8000';
+  if (!imgPath || imgPath === 'default.png' || imgPath === 'default_device.jpg') {
+    return `${apiBase}/storage/devices/default.png`;
+  }
+  if (/^https?:\/\//i.test(imgPath)) {
+    return imgPath.replace(/^https:\/\/localhost:8000/i, 'http://localhost:8000');
+  }
+  let cleanPath = imgPath.replace(/^\/+/, '');
+  cleanPath = cleanPath.replace(/^devices\/?/, '');
+  return `${apiBase}/storage/${cleanPath}`;
+};
+
+// DeviceCard component for modularity
+function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit }) {
+  return (
+    <Paper
+      elevation={0}
+      onClick={() => onReport(device)}
+      sx={{
+        p: 2.5,
+        borderRadius: 3,
+        cursor: 'pointer',
+        backgroundColor: '#fff',
+        border: '1px solid #e0e0e0',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          transform: 'translateY(-2px)',
+          borderColor: '#1976d2'
+        }
+      }}
+    >
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160, backgroundColor: '#f5f5f5', borderRadius: 2.5, overflow: 'hidden' }}>
+        <img
+          src={getDeviceImageUrl(device.image_url || device.image)}
+          alt={device.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
+          onError={e => {
+            e.target.onerror = null;
+            e.target.src = getDeviceImageUrl('default.png');
+          }}
+        />
+      </Box>
+      <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#1976d2', mb: 0.5, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{device.name}</Typography>
+      <Typography variant="body2" sx={{ fontSize: '0.95rem', color: '#888', mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{device.type?.name || 'Unknown Type'}</Typography>
+      <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'capitalize', color: device.status === 'active' ? '#4caf50' : device.status === 'maintenance' ? '#ff9800' : '#f44336', mb: 1 }}>{device.status || 'Unknown'}</Typography>
+      <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#1976d2', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{device.office?.name || 'Unknown Office'}</Typography>
+      <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+        <Button variant="contained" size="small" fullWidth onClick={e => { e.stopPropagation(); onReport(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}>Report Issue</Button>
+        {(isAdmin || isStaff) && (
+          <Button variant="outlined" size="small" onClick={e => { e.stopPropagation(); onEdit(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', minWidth: 'auto', px: 1.5 }}>Edit</Button>
+        )}
+      </Box>
+    </Paper>
+  );
+}
+
 const Devices = () => {
+  const theme = useTheme();
   const [devices, setDevices] = useState([]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(9);
@@ -53,7 +115,15 @@ const Devices = () => {
   const { user, userRole } = useContext(AuthContext);
   const isAdmin = userRole === 'admin';
   const isStaff = userRole === 'staff';
+  const isUser = !isAdmin && !isStaff;
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Set default office for users and staff
+  useEffect(() => {
+    if ((isUser || isStaff) && user && user.office_id) {
+      setFilterOffice(user.office_id);
+    }
+  }, [user, isUser, isStaff]);
 
   // Handle device card click to open report form
   const handleDeviceCardClick = (device) => {
@@ -64,14 +134,32 @@ const Devices = () => {
   const handleDeviceAdded = (newDevice) => {
     fetchDevices();
   };
+  const [categories, setCategories] = useState([]);
+  const [editTypes, setEditTypes] = useState([]);
   const handleEditClick = (device) => {
     setEditDevice(device);
     setEditFormData({
       name: device.name,
       description: device.description || '',
       office_id: device.office?.id || '',
+      category_id: device.category?.id || '',
+      type_id: device.type?.id || '',
       status: device.status || ''
     });
+    // Fetch types for the selected category
+    if (device.category?.id) {
+      axios.get(`/api/device-categories/${device.category.id}/types`).then(res => {
+        if (res.data && Array.isArray(res.data.data?.types)) {
+          setEditTypes(res.data.data.types);
+        } else if (Array.isArray(res.data.types)) {
+          setEditTypes(res.data.types);
+        } else {
+          setEditTypes([]);
+        }
+      }).catch(() => setEditTypes([]));
+    } else {
+      setEditTypes([]);
+    }
     setIsEditDialogOpen(true);
   };
   const handleEditClose = () => {
@@ -106,6 +194,7 @@ const Devices = () => {
   const fetchDevices = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       
       // Add filter parameters
@@ -128,19 +217,41 @@ const Devices = () => {
       const response = await axios.get('/api/devices', { params });
       console.log('[Devices] API Response:', response.data);
       
-      if (response.data && response.data.success && response.data.data) {
-        // Extract data and pagination info from response
-        const deviceData = response.data.data.data || [];
-        console.log('[Devices] Device data:', deviceData);
-        console.log('[Devices] First device details:', deviceData[0]);
-        const pagination = response.data.data;
-        setDevices(deviceData);
-        setTotalItems(pagination.total || 0);
-        setPage(pagination.current_page || 1);
-        setError('');
-      } else {
-        throw new Error(response.data?.message || 'Invalid response format');
+      // Handle different response formats
+      let deviceData = [];
+      let totalCount = 0;
+      let currentPage = 1;
+      
+      if (response.data) {
+        if (response.data.success && response.data.data) {
+          // Laravel paginated response format
+          if (response.data.data.data && Array.isArray(response.data.data.data)) {
+            deviceData = response.data.data.data;
+            totalCount = response.data.data.total || 0;
+            currentPage = response.data.data.current_page || 1;
+          } else if (Array.isArray(response.data.data)) {
+            // Simple array format
+            deviceData = response.data.data;
+            totalCount = deviceData.length;
+          }
+        } else if (Array.isArray(response.data)) {
+          // Direct array response
+          deviceData = response.data;
+          totalCount = deviceData.length;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Nested data array
+          deviceData = response.data.data;
+          totalCount = deviceData.length;
+        }
       }
+      
+      console.log('[Devices] Processed device data:', deviceData);
+      console.log('[Devices] Total count:', totalCount);
+      
+      setDevices(deviceData);
+      setTotalItems(totalCount);
+      setPage(currentPage);
+      
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
       console.error('[Devices] Fetch error:', errorMessage);
@@ -239,44 +350,61 @@ const Devices = () => {
     );
   }
   return (
-    <Container maxWidth="lg" sx={{ bgcolor: 'white', py: 4 }}>
-      <Box sx={{ position: 'relative', bgcolor: 'white' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Container 
+      maxWidth="lg" 
+      sx={{ 
+        bgcolor: theme.palette.background.default,
+        py: theme.customSpacing.xl,
+        minHeight: '100vh'
+      }}
+    >
+      <Box sx={{ position: 'relative' }}>
+        <Typography 
+          variant="h2" 
+          component="h1" 
+          gutterBottom
+          sx={{ 
+            mb: theme.customSpacing.lg,
+            fontWeight: 600,
+            color: theme.palette.text.primary
+          }}
+        >
           Devices Management
         </Typography>
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, bgcolor: 'white' }}>
-          <FormControl sx={{ minWidth: 200, bgcolor: 'white' }}>
-            <InputLabel>Filter by Status</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Filter by Status"
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <MenuItem value="all">All Devices</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-              <MenuItem value="maintenance">Maintenance</MenuItem>
-            </Select>
-          </FormControl>
-          
-          {(isAdmin || isStaff) && (
-            <FormControl sx={{ minWidth: 200, bgcolor: 'white' }}>
-              <InputLabel>Filter by Office</InputLabel>
+        <Box sx={{ 
+          mb: theme.customSpacing.lg, 
+          display: 'flex', 
+          gap: theme.customSpacing.md,
+          flexWrap: 'wrap'
+        }}>
+          <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+            <FormControl sx={{ minWidth: 160 }} size="small">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filterStatus}
+                label="Status"
+                onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="decommissioned">Decommissioned</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 160 }} size="small">
+              <InputLabel>Office</InputLabel>
               <Select
                 value={filterOffice}
-                label="Filter by Office"
-                onChange={(e) => setFilterOffice(e.target.value)}
+                label="Office"
+                onChange={e => { setFilterOffice(e.target.value); setPage(1); }}
               >
-                <MenuItem value="all">All Offices</MenuItem>
+                <MenuItem value="all">All</MenuItem>
                 {offices.map(office => (
-                  <MenuItem key={office.id} value={office.id}>
-                    {office.name}
-                  </MenuItem>
+                  <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-          )}
-        </Box>
+          </Box>
   {/* Issue Logging Form */}
         {selectedDevice && (
           <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
@@ -309,171 +437,63 @@ const Devices = () => {
             </Box>
           </Box>
         )}
-  {/* Devices Grid */}
+  {/* Devices Grid - Following mobile app pagination approach */}
         <Grid container spacing={2}>
-          {devices && devices.length > 0 ? (
-            devices.map(device => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={device.id}>
-                <Paper 
-                  elevation={0}
-                  onClick={() => {
-                    setSelectedDevice(device);
-                    setIsReportDialogOpen(true);
-                  }}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    backgroundColor: '#fff',
-                    border: '1px solid #e0e0e0',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                      transform: 'translateY(-2px)',
-                      borderColor: '#1976d2'
-                    }
-                  }}
-                >
-                  {/* Device Image */}
-                  <Box sx={{ 
-                    mb: 2, 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    height: 140,
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: 2.5,
-                    overflow: 'hidden'
-                  }}>
-                    {device.image_url ? (
-                      <img
-                        src={device.image_url.startsWith('/images/') ? `${import.meta.env.VITE_API_BASE_URL}${device.image_url}` : device.image_url}
-                        alt={device.name}
-                        style={{ 
-                          width: '90%', 
-                          height: '90%', 
-                          objectFit: 'cover', 
-                          borderRadius: 10
-                        }}
-                        onError={e => { 
-                          e.target.onerror = null; 
-                          e.target.src = 'https://via.placeholder.com/200x140?text=No+Image'; 
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={'https://via.placeholder.com/200x140?text=No+Image'}
-                        alt="No Image"
-                        style={{ 
-                          width: '90%', 
-                          height: '90%', 
-                          objectFit: 'cover', 
-                          borderRadius: 10
-                        }}
-                      />
-                    )}
-                  </Box>
-                  
-                  {/* Device Name */}
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontSize: '1.125rem',
-                      fontWeight: 700,
-                      color: '#1976d2',
-                      mb: 0.5,
-                      lineHeight: 1.2,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
-                    }}
-                  >
-                    {device.name}
-                  </Typography>
-                  
-                  {/* Device Status */}
-                  <Typography 
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      textTransform: 'capitalize',
-                      color: device.status === 'active' ? '#4caf50' :
-                             device.status === 'maintenance' ? '#ff9800' : '#f44336',
-                      mb: 1
-                    }}
-                  >
-                    {device.status || 'Unknown'}
-                  </Typography>
-
-                  {/* Action Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
-                    <Button 
-                      variant="contained" 
-                      size="small"
-                      fullWidth
-                      onClick={(e) => {
-                        e.stopPropagation();
+          {Array.isArray(devices) && devices.length > 0 ? (
+            devices
+              .filter(device => filterStatus === 'all' || device.status === filterStatus)
+              .filter(device => filterOffice === 'all' || String(device.office_id) === String(filterOffice))
+              .slice((page - 1) * rowsPerPage, page * rowsPerPage)
+              .map(device => {
+                return (
+                  <Grid item xs={12} sm={6} md={4} lg={4} key={device.id}>
+                    <DeviceCard
+                      device={device}
+                      isAdmin={isAdmin}
+                      isStaff={isStaff}
+                      onReport={device => {
                         setSelectedDevice(device);
                         setIsReportDialogOpen(true);
                       }}
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      Report Issue
-                    </Button>
-                    {(isAdmin || isStaff) && (
-                      <Button 
-                        variant="outlined" 
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditClick(device);
-                        }}
-                        sx={{
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                          minWidth: 'auto',
-                          px: 1.5
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    )}
-                  </Box>
-                </Paper>
-              </Grid>
-            ))
+                      onEdit={handleEditClick}
+                    />
+                  </Grid>
+                );
+              })
+          ) : loading ? (
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            </Grid>
           ) : (
             <Grid item xs={12}>
-              <Typography variant="h6" align="center">
-                No devices found
+              <Typography variant="h6" align="center" sx={{ py: 4 }}>
+                {error ? 'Error loading devices' : 'No devices found'}
               </Typography>
             </Grid>
           )}
         </Grid>
 
-        {/* Pagination */}
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-          <Pagination
-            count={parseInt(Math.max(1, Math.ceil(totalItems / rowsPerPage))) || 1}
-            page={parseInt(Math.min(page, Math.max(1, Math.ceil(totalItems / rowsPerPage)))) || 1}
-            onChange={(event, newPage) => setPage(parseInt(newPage))}
-            color="primary"
-            size="large"
-            showFirstButton
-            showLastButton
-          />
-        </Box>
+        {/* Pagination - Following mobile app approach */}
+        {Array.isArray(devices) && devices.length > rowsPerPage && (
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              count={Math.ceil(
+                devices
+                  .filter(device => filterStatus === 'all' || device.status === filterStatus)
+                  .filter(device => filterOffice === 'all' || String(device.office_id) === String(filterOffice))
+                  .length / rowsPerPage
+              )}
+              page={page}
+              onChange={(event, newPage) => setPage(newPage)}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        )}
       </Box>
       
       <Snackbar
@@ -556,17 +576,63 @@ const Devices = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth margin="normal" required>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={editFormData.status}
-                label="Status"
-                onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-              </Select>
-            </FormControl>
+  <InputLabel>Category</InputLabel>
+  <Select
+    value={editFormData.category_id || ''}
+    label="Category"
+    onChange={async (e) => {
+      const categoryId = e.target.value;
+      setEditFormData({ ...editFormData, category_id: categoryId, type_id: '' });
+      // Fetch types for the selected category
+      try {
+        const res = await axios.get(`/api/device-categories/${categoryId}/types`);
+        if (res.data && Array.isArray(res.data.data?.types)) {
+          setEditTypes(res.data.data.types);
+        } else if (Array.isArray(res.data.types)) {
+          setEditTypes(res.data.types);
+        } else {
+          setEditTypes([]);
+        }
+      } catch {
+        setEditTypes([]);
+      }
+    }}
+  >
+    {categories && categories.map((category) => (
+      <MenuItem key={category.id} value={category.id}>
+        {category.name}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+{editFormData.category_id && (
+  <FormControl fullWidth margin="normal" required>
+    <InputLabel>Type</InputLabel>
+    <Select
+      value={editFormData.type_id || ''}
+      label="Type"
+      onChange={(e) => setEditFormData({ ...editFormData, type_id: e.target.value })}
+    >
+      {editTypes && editTypes.map((type) => (
+        <MenuItem key={type.id} value={type.id}>
+          {type.name}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+)}
+<FormControl fullWidth margin="normal" required>
+  <InputLabel>Status</InputLabel>
+  <Select
+    value={editFormData.status}
+    label="Status"
+    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+  >
+    <MenuItem value="active">Active</MenuItem>
+    <MenuItem value="inactive">Inactive</MenuItem>
+    <MenuItem value="maintenance">Maintenance</MenuItem>
+  </Select>
+</FormControl>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleEditClose}>Cancel</Button>

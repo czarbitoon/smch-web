@@ -121,9 +121,8 @@ export const theme = createTheme({
         root: {
           backgroundColor: '#ffffff',
           boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-          borderRadius: '16px',
-          padding: '24px',
-          height: '100%'
+          borderRadius: '16px'
+          // Removed global padding and height to fix AppBar size
         }
       }
     },
@@ -211,7 +210,27 @@ export const theme = createTheme({
     }
   },
   shape: {
-    borderRadius: 4
+    borderRadius: 8
   },
-  spacing: 8
+  spacing: 8, // Base 8pt grid unit
+  
+  // Custom spacing tokens for consistency
+  customSpacing: {
+    xs: 4,   // 0.5 * 8pt
+    sm: 8,   // 1 * 8pt
+    md: 16,  // 2 * 8pt
+    lg: 24,  // 3 * 8pt
+    xl: 32,  // 4 * 8pt
+    xxl: 40, // 5 * 8pt
+    xxxl: 48 // 6 * 8pt
+  },
+  
+  // Border radius system
+  customBorderRadius: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32
+  }
 });

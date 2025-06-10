@@ -1,12 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Container, 
-  Typography, 
-  Button, 
-  Box, 
-  TextField, 
-  CircularProgress, 
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  TextField,
+  CircularProgress,
   Alert,
   Paper,
   InputAdornment,
@@ -23,30 +23,22 @@ function Login() {
   const navigate = useNavigate();
   const { login, loading } = useContext(AuthContext);
 
-
   const handleLogin = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
-    
     if (!email.includes('@')) {
       setError('Please enter a valid email address');
       return;
     }
-    
     setError('');
-    
     try {
       const result = await login(email, password);
-      
       if (result.success) {
         const role = result.role;
-        
-        // Navigate based on role
         if (role === 'admin' || role === 'superadmin') {
           navigate('/admin/dashboard');
         } else if (role === 'staff') {
@@ -57,7 +49,6 @@ function Login() {
       }
     } catch (error) {
       let errorMessage = 'Login failed. Please try again.';
-      
       if (error.response) {
         switch (error.response.status) {
           case 401:
@@ -78,7 +69,6 @@ function Login() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
       setError(errorMessage);
     }
   };
@@ -89,7 +79,7 @@ function Login() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundColor: '#f4f6fb',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -98,53 +88,48 @@ function Login() {
     >
       <Container maxWidth="sm">
         <Paper
-          elevation={24}
+          elevation={3}
           sx={{
-            padding: { xs: 3, sm: 4, md: 5 },
-            borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
+            padding: { xs: 3, sm: 4 },
+            borderRadius: 4,
+            background: '#fff',
+            boxShadow: '0 4px 24px rgba(102, 126, 234, 0.10)',
+            mt: 4
           }}
         >
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography 
-              variant="h3" 
-              component="h1" 
-              sx={{ 
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(45deg, #667eea, #764ba2)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: '#1976d2',
                 mb: 1
               }}
             >
-              Welcome Back
+              Login
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Sign in to your account to continue
             </Typography>
           </Box>
-
           {error && (
-            <Alert 
-              severity="error" 
-              sx={{ mb: 3, borderRadius: 2 }}
+            <Alert
+              severity="error"
+              sx={{ mb: 2, borderRadius: 2 }}
               onClose={() => setError('')}
             >
               {error}
             </Alert>
           )}
-
-          <Box 
-            component="form" 
-            onSubmit={handleLogin} 
+          <Box
+            component="form"
+            onSubmit={handleLogin}
             noValidate
             sx={{ width: '100%' }}
           >
             <TextField
-              label="Email Address"
+              label="Email"
               type="email"
               fullWidth
               margin="normal"
@@ -158,19 +143,10 @@ function Login() {
                   <InputAdornment position="start">
                     <Email color="action" />
                   </InputAdornment>
-                ),
+                )
               }}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: 'primary.main',
-                  },
-                }
-              }}
+              sx={{ mb: 2, borderRadius: 2 }}
             />
-            
             <TextField
               label="Password"
               type={showPassword ? 'text' : 'password'}
@@ -196,36 +172,27 @@ function Login() {
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
-                ),
+                )
               }}
-              sx={{
-                mb: 3,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: 'primary.main',
-                  },
-                }
-              }}
+              sx={{ mb: 3, borderRadius: 2 }}
             />
-            
-            <Button 
-              type="submit" 
-              variant="contained" 
+            <Button
+              type="submit"
+              variant="contained"
               fullWidth
               disabled={loading || !email || !password}
-              sx={{ 
+              sx={{
                 py: 1.5,
-                mb: 3,
+                mb: 2,
                 borderRadius: 2,
                 textTransform: 'none',
                 fontSize: '1.1rem',
                 fontWeight: 600,
-                background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                background: 'linear-gradient(45deg, #1976d2, #2196f3)',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #5a6fd8, #6a4190)',
+                  background: 'linear-gradient(45deg, #1565c0, #1e88e5)',
                   transform: 'translateY(-1px)',
-                  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+                  boxShadow: '0 8px 25px rgba(33, 150, 243, 0.15)'
                 },
                 '&:disabled': {
                   background: 'rgba(0, 0, 0, 0.12)'
@@ -239,30 +206,29 @@ function Login() {
                   Signing in...
                 </Box>
               ) : (
-                'Sign In'
+                'Login'
               )}
             </Button>
-            
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 Don't have an account?
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 onClick={() => navigate('/register')}
-                sx={{ 
+                sx={{
                   borderRadius: 2,
                   textTransform: 'none',
                   fontWeight: 600,
-                  borderColor: 'primary.main',
-                  color: 'primary.main',
+                  borderColor: '#1976d2',
+                  color: '#1976d2',
                   '&:hover': {
-                    borderColor: 'primary.dark',
+                    borderColor: '#125ea2',
                     backgroundColor: 'rgba(102, 126, 234, 0.04)'
                   }
                 }}
               >
-                Create Account
+                Register
               </Button>
             </Box>
           </Box>

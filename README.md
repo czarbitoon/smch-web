@@ -24,3 +24,18 @@ To deploy this webapp to [Vercel](https://vercel.com):
 - For custom domains, configure them in the Vercel dashboard.
 
 For more details, see the [Vercel documentation](https://vercel.com/docs).
+
+## API URL Configuration
+
+To set the backend API URL for development or production, use the `.env` file:
+
+```
+VITE_API_BASE_URL=https://api.yourdomain.com
+```
+
+For local development, you can use:
+```
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+This ensures all API calls use the correct base URL in both dev and production builds.

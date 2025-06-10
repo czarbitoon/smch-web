@@ -4,7 +4,7 @@ import logo from '../assets/logo.png';
 export const Logo = ({ width = 150, height = 150 }) => (
   <img
     src={logo}
-    alt="St. Michael's College of Hindang Logo"
+    alt="St. Michael's College Logo"
     style={{
       width,
       height,

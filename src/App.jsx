@@ -5,9 +5,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import ErrorFallback from './components/ErrorFallback';
-// import Pusher from 'pusher-js';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// Notification features removed
 
 // Lazy load components
 const Login = lazy(() => import('./components/Login'));
@@ -154,7 +152,7 @@ function App() {
             />
           </Routes>
         </Suspense>
-        <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+        {/* Notification features removed */}
       </BrowserRouter>
     </ErrorBoundary>
   );

@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Notifications as NotificationsIcon,
+  // Notifications as NotificationsIcon, // Removed notification feature
   AccountCircle as AccountIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
@@ -109,21 +109,7 @@ const AppHeader = ({ onToggleSidebar }) => {
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton 
-              sx={{ 
-                color: 'text.secondary',
-                '&:hover': {
-                  bgcolor: 'action.hover'
-                }
-              }}
-            >
-              <Badge badgeContent={3} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
+          {/* Notifications feature removed */}
 
           {/* Profile Menu */}
           <Tooltip title="Account">
