@@ -97,7 +97,6 @@ const Devices = () => {
 
   // State declarations
   const [devices, setDevices] = useState([]);
-  const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(9);
   const [totalItems, setTotalItems] = useState(0);
   const [issueDescription, setIssueDescription] = useState('');
@@ -106,8 +105,10 @@ const Devices = () => {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterOffice, setFilterOffice] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterType, setFilterType] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 9;
   const [offices, setOffices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
@@ -136,8 +137,16 @@ const Devices = () => {
   // Fetch categories
   useEffect(() => {
     axios.get('/api/device-categories').then(res => {
-      setCategories(Array.isArray(res.data?.data) ? res.data.data : 
-                   Array.isArray(res.data?.categories) ? res.data.categories : []);
+      // Support both { data: [...] } and { categories: [...] }
+      let cats = [];
+      if (Array.isArray(res.data?.data)) {
+        cats = res.data.data;
+      } else if (Array.isArray(res.data?.categories)) {
+        cats = res.data.categories;
+      } else if (Array.isArray(res.data)) {
+        cats = res.data;
+      }
+      setCategories(cats);
     }).catch(() => setCategories([]));
   }, []);
 
@@ -152,6 +161,7 @@ const Devices = () => {
       setTypes([]);
     }
     setFilterType('all');
+    setPage(1);
   }, [filterCategory]);
 
   // Fetch devices
@@ -159,41 +169,29 @@ const Devices = () => {
     try {
       setLoading(true);
       setError('');
-      const params = new URLSearchParams();
-      
-      if (filterStatus !== 'all') params.append('status', filterStatus);
-      if (filterCategory !== 'all') params.append('category_id', filterCategory);
-      if (filterType !== 'all') params.append('type_id', filterType);
-      if (!isAdmin && !isStaff && user?.office_id) {
-        params.append('office_id', user.office_id);
-      } else if (filterOffice !== 'all') {
-        params.append('office_id', filterOffice);
-      }
-      
-      params.append('page', page);
-      params.append('per_page', rowsPerPage);
-
+      const params = {};
+      if (filterCategory) params.device_category_id = filterCategory;
+      if (filterType) params.device_type_id = filterType;
+      if (filterOffice) params.office_id = filterOffice;
+      if (filterStatus) params.status = filterStatus;
+      params.page = page;
+      params.per_page = rowsPerPage;
       const response = await axios.get('/api/devices', { params });
-      
-      let deviceData = [];
+      console.log('Device API response:', response);
+      let deviceArray = [];
       let totalCount = 0;
       let currentPage = 1;
-
-      if (response.data?.success && response.data.data) {
-        if (Array.isArray(response.data.data.data)) {
-          deviceData = response.data.data.data;
-          totalCount = response.data.data.total || 0;
-          currentPage = response.data.data.current_page || 1;
-        } else if (Array.isArray(response.data.data)) {
-          deviceData = response.data.data;
-          totalCount = deviceData.length;
-        }
-      } else if (Array.isArray(response.data)) {
-        deviceData = response.data;
-        totalCount = deviceData.length;
+      if (response.data && response.data.data && Array.isArray(response.data.data.data)) {
+        deviceArray = response.data.data.data;
+        totalCount = response.data.data.total || 0;
+        currentPage = response.data.data.current_page || 1;
+      } else if (Array.isArray(response.data.data)) {
+        deviceArray = response.data.data;
+        totalCount = deviceArray.length;
+      } else {
+        deviceArray = [];
       }
-
-      setDevices(deviceData);
+      setDevices(deviceArray);
       setTotalItems(totalCount);
       setPage(currentPage);
     } catch (error) {
@@ -311,14 +309,15 @@ const Devices = () => {
     }
   };
 
-  // Filter and paginate devices
+  // Filter devices (no client-side pagination)
   const filteredDevices = devices
     .filter(device => filterStatus === 'all' || device.status === filterStatus)
     .filter(device => filterOffice === 'all' || String(device.office_id) === String(filterOffice))
     .filter(device => filterCategory === 'all' || String(device.category_id) === String(filterCategory))
     .filter(device => filterType === 'all' || String(device.type_id) === String(filterType));
 
-  const paginatedDevices = filteredDevices.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  // Use backend pagination
+  const paginatedDevices = filteredDevices;
 
   if (loading) {
     return (
@@ -381,43 +380,48 @@ const Devices = () => {
           <Select
             value={filterCategory}
             label="Category"
-            onChange={e => { setFilterCategory(e.target.value); setPage(1); }}
+            onChange={e => {
+              setFilterCategory(e.target.value);
+              setFilterType('');
+              setPage(1);
+            }}
           >
-            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="">All</MenuItem>
             {categories.map(cat => (
               <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 160 }} size="small" disabled={filterCategory === 'all'}>
+        <FormControl sx={{ minWidth: 160 }} size="small" disabled={!filterCategory}>
           <InputLabel>Type</InputLabel>
           <Select
             value={filterType}
             label="Type"
             onChange={e => { setFilterType(e.target.value); setPage(1); }}
           >
-            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="">All</MenuItem>
             {types.map(type => (
               <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
 
+        // Add Office filter to filter bar for admin/staff
         {(isAdmin || isStaff) && (
-          <FormControl sx={{ minWidth: 160 }} size="small">
-            <InputLabel>Office</InputLabel>
-            <Select
-              value={filterOffice}
-              label="Office"
-              onChange={e => { setFilterOffice(e.target.value); setPage(1); }}
-            >
-              <MenuItem value="all">All</MenuItem>
-              {offices.map(office => (
-                <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <FormControl sx={{ minWidth: 160 }} size="small">
+          <InputLabel>Office</InputLabel>
+          <Select
+            value={filterOffice}
+            label="Office"
+            onChange={e => { setFilterOffice(e.target.value); setPage(1); }}
+          >
+            <MenuItem value="">All</MenuItem>
+            {offices.map(office => (
+              <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         )}
       </Box>
 
@@ -480,10 +484,10 @@ const Devices = () => {
       </Grid>
 
       {/* Pagination */}
-      {filteredDevices.length > rowsPerPage && (
+      {totalItems > rowsPerPage && (
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
           <Pagination
-            count={Math.ceil(filteredDevices.length / rowsPerPage)}
+            count={Math.ceil(totalItems / rowsPerPage)}
             page={page}
             onChange={(event, newPage) => setPage(newPage)}
             color="primary"
@@ -491,6 +495,21 @@ const Devices = () => {
             showFirstButton
             showLastButton
           />
+        </Box>
+      )}
+
+      {/* Add Device Button (Page-level for admins) */}
+      {(isAdmin || isStaff) && (
+        <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setIsAddDeviceOpen(true)}
+            sx={{ borderRadius: 2, fontWeight: 600 }}
+          >
+            Add Device
+          </Button>
         </Box>
       )}
 

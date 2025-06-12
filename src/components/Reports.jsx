@@ -36,36 +36,51 @@ const Reports = () => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterOffice, setFilterOffice] = useState('all');
+  const [offices, setOffices] = useState([]);
   const { user } = useContext(AuthContext);
   const userRole = user?.role || 'user';
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchReports();
+    if ((userRole === 'admin' || userRole === 'staff')) {
+      fetchOffices();
+    }
     // Only set up auto-refresh when form is not open
     let interval;
     if (!isAddModalOpen) {
       interval = setInterval(fetchReports, 30000);
     }
     return () => interval && clearInterval(interval);
-  }, [isAddModalOpen]); // Add isAddModalOpen as dependency
+  }, [isAddModalOpen, filterStatus, filterOffice]);
 
   const fetchReports = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      
-      // If not admin/staff, only show reports from user's office
-      if (userRole !== 'admin' && userRole !== 'staff') {
+      if (filterStatus !== 'all') params.append('status', filterStatus);
+      if ((userRole === 'admin' || userRole === 'staff') && filterOffice !== 'all') {
+        params.append('office_id', filterOffice);
+      } else if (userRole !== 'admin' && userRole !== 'staff') {
         params.append('office_id', user.office_id);
       }
-
       const response = await axios.get('/api/reports', { params });
       setReports(response.data);
     } catch (error) {
       setError('Error fetching reports: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOffices = async () => {
+    try {
+      const response = await axios.get('/api/offices');
+      setOffices(Array.isArray(response.data?.data) ? response.data.data : Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      setOffices([]);
     }
   };
 
@@ -171,6 +186,39 @@ const Reports = () => {
         >
           Add Report
         </Button>
+      </Box>
+
+      {/* Filter Bar */}
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <FormControl sx={{ minWidth: 160 }} size="small">
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={filterStatus}
+            label="Status"
+            onChange={e => { setFilterStatus(e.target.value); }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="resolved">Resolved</MenuItem>
+            <MenuItem value="repair">Under Repair</MenuItem>
+            <MenuItem value="decommissioned">Decommissioned</MenuItem>
+          </Select>
+        </FormControl>
+        {(userRole === 'admin' || userRole === 'staff') && (
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel>Office</InputLabel>
+            <Select
+              value={filterOffice}
+              label="Office"
+              onChange={e => { setFilterOffice(e.target.value); }}
+            >
+              <MenuItem value="all">All</MenuItem>
+              {offices.map(office => (
+                <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
       </Box>
 
       {error && (
