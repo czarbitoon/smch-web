@@ -37,9 +37,7 @@ const getDeviceImageUrl = (imgPath) => {
   if (/^https?:\/\//i.test(imgPath)) {
     return imgPath.replace(/^https:\/\/localhost:8000/i, 'http://localhost:8000');
   }
-  let cleanPath = imgPath.replace(/^\/+/, '');
-  cleanPath = cleanPath.replace(/^devices\/?/, '');
-  return `${apiBase}/storage/${cleanPath}`;
+  return `${apiBase}/storage/${imgPath.replace(/^\/*(devices\/)?/, '')}`;
 };
 
 // DeviceCard component
@@ -68,7 +66,7 @@ function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit }) {
           src={getDeviceImageUrl(device.image_url || device.image)}
           alt={device.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
-          onError={e => {
+          onError={(e) => {
             e.target.onerror = null;
             e.target.src = getDeviceImageUrl('default.png');
           }}
@@ -79,9 +77,9 @@ function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit }) {
       <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'capitalize', color: device.status === 'active' ? '#4caf50' : device.status === 'maintenance' ? '#ff9800' : '#f44336', mb: 1 }}>{device.status || 'Unknown'}</Typography>
       <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#1976d2', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{device.office?.name || 'Unknown Office'}</Typography>
       <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
-        <Button variant="contained" size="small" fullWidth onClick={e => { e.stopPropagation(); onReport(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}>Report Issue</Button>
+        <Button variant="contained" size="small" fullWidth onClick={(e) => { e.stopPropagation(); onReport(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}>Report Issue</Button>
         {(isAdmin || isStaff) && (
-          <Button variant="outlined" size="small" onClick={e => { e.stopPropagation(); onEdit(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', minWidth: 'auto', px: 1.5 }}>Edit</Button>
+          <Button variant="outlined" size="small" onClick={(e) => { e.stopPropagation(); onEdit(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', minWidth: 'auto', px: 1.5 }}>Edit</Button>
         )}
       </Box>
     </Paper>
@@ -105,10 +103,9 @@ const Devices = () => {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterOffice, setFilterOffice] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [page, setPage] = useState(1);
-  const rowsPerPage = 9;
   const [offices, setOffices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
@@ -137,15 +134,9 @@ const Devices = () => {
   // Fetch categories
   useEffect(() => {
     axios.get('/api/device-categories').then(res => {
-      // Support both { data: [...] } and { categories: [...] }
-      let cats = [];
-      if (Array.isArray(res.data?.data)) {
-        cats = res.data.data;
-      } else if (Array.isArray(res.data?.categories)) {
-        cats = res.data.categories;
-      } else if (Array.isArray(res.data)) {
-        cats = res.data;
-      }
+      const cats = Array.isArray(res.data?.data) ? res.data.data :
+                   Array.isArray(res.data?.categories) ? res.data.categories :
+                   Array.isArray(res.data) ? res.data : [];
       setCategories(cats);
     }).catch(() => setCategories([]));
   }, []);
@@ -169,33 +160,24 @@ const Devices = () => {
     try {
       setLoading(true);
       setError('');
-      const params = {};
-      if (filterCategory) params.device_category_id = filterCategory;
-      if (filterType) params.device_type_id = filterType;
-      if (filterOffice) params.office_id = filterOffice;
-      if (filterStatus) params.status = filterStatus;
-      params.page = page;
-      params.per_page = rowsPerPage;
+      const params = {
+        page,
+        per_page: rowsPerPage,
+        ...(filterCategory !== 'all' && { device_category_id: filterCategory }),
+        ...(filterType !== 'all' && { device_type_id: filterType }),
+        ...(filterOffice !== 'all' && { office_id: filterOffice }),
+        ...(filterStatus !== 'all' && { status: filterStatus })
+      };
       const response = await axios.get('/api/devices', { params });
-      console.log('Device API response:', response);
-      let deviceArray = [];
-      let totalCount = 0;
-      let currentPage = 1;
-      if (response.data && response.data.data && Array.isArray(response.data.data.data)) {
-        deviceArray = response.data.data.data;
-        totalCount = response.data.data.total || 0;
-        currentPage = response.data.data.current_page || 1;
-      } else if (Array.isArray(response.data.data)) {
-        deviceArray = response.data.data;
-        totalCount = deviceArray.length;
-      } else {
-        deviceArray = [];
-      }
+      const deviceArray = Array.isArray(response.data?.data?.data) ? response.data.data.data :
+                         Array.isArray(response.data?.data) ? response.data.data : [];
+      const totalCount = response.data?.data?.total || deviceArray.length;
+      const currentPage = response.data?.data?.current_page || 1;
       setDevices(deviceArray);
       setTotalItems(totalCount);
       setPage(currentPage);
     } catch (error) {
-      setError('Error fetching devices: ' + (error.response?.data?.message || error.message));
+      setError(`Error fetching devices: ${error.response?.data?.message || error.message}`);
       setDevices([]);
       setTotalItems(0);
     } finally {
@@ -209,9 +191,9 @@ const Devices = () => {
       try {
         const response = await axios.get('/api/offices');
         setOffices(Array.isArray(response.data?.data) ? response.data.data :
-                  Array.isArray(response.data) ? response.data : []);
+                   Array.isArray(response.data) ? response.data : []);
       } catch (error) {
-        setError('Error fetching offices: ' + (error.response?.data?.message || error.message));
+        setError(`Error fetching offices: ${error.response?.data?.message || error.message}`);
         setOffices([]);
       }
     }
@@ -232,15 +214,15 @@ const Devices = () => {
       name: device.name,
       description: device.description || '',
       office_id: device.office?.id || '',
-      category_id: device.category?.id || '',
-      type_id: device.type?.id || '',
+      category_id: device.category?.id || 'all',
+      type_id: device.type?.id || 'all',
       status: device.status || ''
     });
     
     if (device.category?.id) {
       axios.get(`/api/device-categories/${device.category.id}/types`).then(res => {
         setEditTypes(Array.isArray(res.data?.data?.types) ? res.data.data.types :
-                    Array.isArray(res.data?.types) ? res.data.types : []);
+                     Array.isArray(res.data?.types) ? res.data.types : []);
       }).catch(() => setEditTypes([]));
     } else {
       setEditTypes([]);
@@ -276,7 +258,7 @@ const Devices = () => {
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Error updating device: ' + (error.response?.data?.message || error.message),
+        message: `Error updating device: ${error.response?.data?.message || error.message}`,
         severity: 'error'
       });
     }
@@ -305,7 +287,7 @@ const Devices = () => {
       setSelectedDevice(null);
       fetchDevices();
     } catch (error) {
-      setError('Error submitting report: ' + (error.response?.data?.message || error.message));
+      setError(`Error submitting report: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -362,7 +344,7 @@ const Devices = () => {
           <Select
             value={filterStatus}
             label="Status"
-            onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
           >
             <MenuItem value="all">All</MenuItem>
             <MenuItem value="active">Active</MenuItem>
@@ -380,48 +362,48 @@ const Devices = () => {
           <Select
             value={filterCategory}
             label="Category"
-            onChange={e => {
+            onChange={(e) => {
               setFilterCategory(e.target.value);
-              setFilterType('');
+              setFilterType('all');
               setPage(1);
             }}
           >
-            <MenuItem value="">All</MenuItem>
+            <MenuItem value="all">All</MenuItem>
             {categories.map(cat => (
               <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 160 }} size="small" disabled={!filterCategory}>
+        <FormControl sx={{ minWidth: 160 }} size="small" disabled={filterCategory === 'all'}>
           <InputLabel>Type</InputLabel>
           <Select
             value={filterType}
             label="Type"
-            onChange={e => { setFilterType(e.target.value); setPage(1); }}
+            onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
           >
-            <MenuItem value="">All</MenuItem>
+            <MenuItem value="all">All</MenuItem>
             {types.map(type => (
               <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        // Add Office filter to filter bar for admin/staff
+        {/* Add Office filter to filter bar for admin/staff */}
         {(isAdmin || isStaff) && (
-        <FormControl sx={{ minWidth: 160 }} size="small">
-          <InputLabel>Office</InputLabel>
-          <Select
-            value={filterOffice}
-            label="Office"
-            onChange={e => { setFilterOffice(e.target.value); setPage(1); }}
-          >
-            <MenuItem value="">All</MenuItem>
-            {offices.map(office => (
-              <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel>Office</InputLabel>
+            <Select
+              value={filterOffice}
+              label="Office"
+              onChange={(e) => { setFilterOffice(e.target.value); setPage(1); }}
+            >
+              <MenuItem value="all">All</MenuItem>
+              {offices.map(office => (
+                <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         )}
       </Box>
 
@@ -466,7 +448,7 @@ const Devices = () => {
                 device={device}
                 isAdmin={isAdmin}
                 isStaff={isStaff}
-                onReport={device => {
+                onReport={(device) => {
                   setSelectedDevice(device);
                   setIsReportDialogOpen(true);
                 }}
@@ -594,20 +576,25 @@ const Devices = () => {
             <FormControl fullWidth margin="normal" required>
               <InputLabel>Category</InputLabel>
               <Select
-                value={editFormData.category_id || ''}
+                value={editFormData.category_id || 'all'}
                 label="Category"
                 onChange={async (e) => {
                   const categoryId = e.target.value;
-                  setEditFormData({ ...editFormData, category_id: categoryId, type_id: '' });
-                  try {
-                    const res = await axios.get(`/api/device-categories/${categoryId}/types`);
-                    setEditTypes(Array.isArray(res.data?.data?.types) ? res.data.data.types :
-                                Array.isArray(res.data?.types) ? res.data.types : []);
-                  } catch {
+                  setEditFormData({ ...editFormData, category_id: categoryId, type_id: 'all' });
+                  if (categoryId !== 'all') {
+                    try {
+                      const res = await axios.get(`/api/device-categories/${categoryId}/types`);
+                      setEditTypes(Array.isArray(res.data?.data?.types) ? res.data.data.types :
+                                   Array.isArray(res.data?.types) ? res.data.types : []);
+                    } catch {
+                      setEditTypes([]);
+                    }
+                  } else {
                     setEditTypes([]);
                   }
                 }}
               >
+                <MenuItem value="all">All</MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
                     {category.name}
@@ -615,14 +602,15 @@ const Devices = () => {
                 ))}
               </Select>
             </FormControl>
-            {editFormData.category_id && (
+            {editFormData.category_id !== 'all' && (
               <FormControl fullWidth margin="normal" required>
                 <InputLabel>Type</InputLabel>
                 <Select
-                  value={editFormData.type_id || ''}
+                  value={editFormData.type_id || 'all'}
                   label="Type"
                   onChange={(e) => setEditFormData({ ...editFormData, type_id: e.target.value })}
                 >
+                  <MenuItem value="all">All</MenuItem>
                   {editTypes.map((type) => (
                     <MenuItem key={type.id} value={type.id}>
                       {type.name}
