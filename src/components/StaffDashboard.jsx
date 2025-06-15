@@ -41,17 +41,17 @@ function StaffDashboard() {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', bgcolor: 'background.default' }}>
         <CircularProgress size={60} />
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3, backgroundColor: '#f4f6fa', minHeight: '100vh' }}>
+    <Container maxWidth="lg" sx={{ py: 4, minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, px: 1 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', letterSpacing: 0.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5, px: 1 }}>
+        <Typography variant="h3" sx={{ fontWeight: 900, color: 'primary.dark', letterSpacing: 1 }}>
           Staff Dashboard
         </Typography>
         <Button
@@ -60,11 +60,14 @@ function StaffDashboard() {
           onClick={handleLogout}
           startIcon={<Logout />}
           sx={{
-            borderRadius: 2.5,
-            px: 3,
-            py: 1,
+            borderRadius: 3,
+            px: 4,
+            py: 1.5,
             fontWeight: 'bold',
-            boxShadow: '0 2px 4px rgba(229, 57, 53, 0.12)'
+            fontSize: '1.1rem',
+            boxShadow: 3,
+            transition: 'all 0.2s',
+            '&:hover': { background: 'error.dark', transform: 'scale(1.04)' }
           }}
         >
           Logout
@@ -72,47 +75,41 @@ function StaffDashboard() {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
+        <Alert severity="error" sx={{ mb: 3, fontSize: 18, borderRadius: 2 }}>{error}</Alert>
       )}
 
       {/* Profile Card */}
       {user && (
         <Paper 
-          elevation={0} 
+          elevation={6} 
           sx={{ 
-            p: 4, 
-            mb: 4, 
-            borderRadius: 3, 
-            textAlign: 'center',
-            backgroundColor: '#fff',
-            boxShadow: '0 3px 8px rgba(0,0,0,0.10)'
+            p: 5, mb: 5, borderRadius: 4, textAlign: 'center',
+            bgcolor: 'background.paper',
+            boxShadow: 6,
+            position: 'relative',
+            overflow: 'visible',
           }}
         >
           <Avatar
             src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : undefined}
             sx={{ 
-              width: 72, 
-              height: 72, 
-              mx: 'auto', 
-              mb: 2,
-              backgroundColor: '#90caf9'
+              width: 96, height: 96, mx: 'auto', mb: 2, backgroundColor: 'primary.light',
+              border: '4px solid', borderColor: 'primary.dark', boxShadow: 2,
+              fontSize: 40, fontWeight: 700
             }}
           >
             {!user.profile_picture && user.name?.charAt(0)}
           </Avatar>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-            {user.name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {user.email}
-          </Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5, color: 'primary.dark', letterSpacing: 0.5 }}>{user.name}</Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: 18 }}>{user.email}</Typography>
         </Paper>
       )}
 
+      {/* Section Divider */}
+      <Box sx={{ mb: 4, mt: 2, borderBottom: 2, borderColor: 'divider', width: '100%' }} />
+
       {/* Menu Section */}
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Button
             variant="contained"
@@ -120,15 +117,15 @@ function StaffDashboard() {
             onClick={() => navigate('/devices')}
             startIcon={<Build />}
             sx={{
-              py: 2,
-              borderRadius: 3,
-              backgroundColor: '#1976d2',
+              py: 2.5,
+              borderRadius: 4,
               fontWeight: 'bold',
-              fontSize: '1.1rem',
-              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
-              '&:hover': {
-                backgroundColor: '#1565c0'
-              }
+              fontSize: '1.2rem',
+              boxShadow: 3,
+              mb: 2,
+              letterSpacing: 0.5,
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.03)' }
             }}
           >
             Devices
@@ -141,15 +138,15 @@ function StaffDashboard() {
             onClick={() => navigate('/reports')}
             startIcon={<Report />}
             sx={{
-              py: 2,
-              borderRadius: 3,
-              backgroundColor: '#1976d2',
+              py: 2.5,
+              borderRadius: 4,
               fontWeight: 'bold',
-              fontSize: '1.1rem',
-              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
-              '&:hover': {
-                backgroundColor: '#1565c0'
-              }
+              fontSize: '1.2rem',
+              boxShadow: 3,
+              mb: 2,
+              letterSpacing: 0.5,
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.03)' }
             }}
           >
             Reports
@@ -162,15 +159,15 @@ function StaffDashboard() {
             onClick={() => navigate('/profile')}
             startIcon={<Person />}
             sx={{
-              py: 2,
-              borderRadius: 3,
-              backgroundColor: '#1976d2',
+              py: 2.5,
+              borderRadius: 4,
               fontWeight: 'bold',
-              fontSize: '1.1rem',
-              boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)',
-              '&:hover': {
-                backgroundColor: '#1565c0'
-              }
+              fontSize: '1.2rem',
+              boxShadow: 3,
+              mb: 2,
+              letterSpacing: 0.5,
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark', transform: 'scale(1.03)' }
             }}
           >
             Profile

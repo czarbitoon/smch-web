@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box, TextField, Button, Stack, FormControl, InputLabel, Select, MenuItem, Typography, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, Box, TextField, Button, Stack, FormControl, InputLabel, Select, MenuItem, Typography, IconButton, Autocomplete, TextField as AutocompleteTextField } from '@mui/material';
 import { PhotoCamera, Close } from '@mui/icons-material';
 import { reportService } from '../services/api';
 import axios from '../axiosInstance';
@@ -8,37 +8,53 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
   const [description, setDescription] = useState('');
   const [deviceId, setDeviceId] = useState(preselectedDeviceId || '');
   const [devices, setDevices] = useState([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
   const [reportImage, setReportImage] = useState(null);
   const [reportImagePreview, setReportImagePreview] = useState('');
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const fileInputRef = useRef(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     if (open) {
+      setLoadingDevices(true);
       fetchDevices();
-      if (preselectedDeviceId) {
-        setDeviceId(preselectedDeviceId);
-      }
+      setDeviceId(preselectedDeviceId || '');
+      setSelectedDevice(null); // Always reset, will set after devices load
     }
-  }, [open, preselectedDeviceId]);
+  }, [open, preselectedDeviceId]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const fetchDevices = async () => {
     try {
       const response = await axios.get('/api/devices');
-      // Ensure we always set an array, even if the response is empty or malformed
-      setDevices(Array.isArray(response.data) ? response.data : (response.data?.data || []));
+      console.log('Devices API Response:', response.data);
+      let deviceList = [];
+      if (Array.isArray(response.data)) {
+        deviceList = response.data;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        deviceList = response.data.data;
+      } else if (response.data?.devices && Array.isArray(response.data.devices)) {
+        deviceList = response.data.devices;
+      } else {
+        console.warn('Unexpected API response format:', response.data);
+      }
+      setDevices(deviceList);
+      if (preselectedDeviceId) {
+        const device = deviceList.find(d => d.id === preselectedDeviceId);
+        setSelectedDevice(device || null);
+      }
     } catch (error) {
       console.error('Error fetching devices:', error);
-      setDevices([]); // Set empty array on error
+      setDevices([]);
       setSnackbar({
         open: true,
         message: 'Error fetching devices: ' + (error.response?.data?.message || error.message),
         severity: 'error'
       });
+    } finally {
+      setLoadingDevices(false);
     }
   };
-
-
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -72,16 +88,14 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
     }
 
     try {
-      const selectedDevice = devices.find(d => d.id === deviceId);
+      const selectedDevice = devices.find(d => d.id === deviceId) || { name: 'Unknown Device' };
       const formData = new FormData();
-      formData.append('title', `Issue Report - ${selectedDevice?.name || 'Device'}`);
+      formData.append('title', `Issue Report - ${selectedDevice.name}`);
       formData.append('description', description);
       formData.append('device_id', deviceId);
       formData.append('status', 'pending');
       
-      // Add the image if one was selected
       if (reportImage) {
-        // Upload image to new backend endpoint first
         const imgForm = new FormData();
         imgForm.append('image', reportImage);
         imgForm.append('folder', 'report_images');
@@ -91,7 +105,7 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
         }
       }
 
-      // Set the authorization header for the reportService
+      const token = localStorage.getItem('token');
       const response = await axios.post('/reports', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -122,6 +136,7 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
   const handleClose = () => {
     setDescription('');
     setDeviceId('');
+    setSelectedDevice(null);
     setReportImage(null);
     setReportImagePreview('');
     onClose && onClose();
@@ -145,20 +160,57 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
         <form onSubmit={handleSubmit}>
           <DialogContent sx={{ py: 2 }}>
             <Stack spacing={3}>
-              <FormControl fullWidth required variant="outlined" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}>
-                <InputLabel>Device</InputLabel>
-                <Select
-                  value={deviceId}
+              {/* Device Field */}
+              {loadingDevices ? (
+                <TextField
                   label="Device"
-                  onChange={(e) => setDeviceId(e.target.value)}
-                >
-                  {devices.map((device) => (
-                    <MenuItem key={device.id} value={device.id}>
-                      {device.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  value="Loading devices..."
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  required
+                  variant="outlined"
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                />
+              ) : preselectedDeviceId ? (
+                <TextField
+                  label="Device"
+                  value={
+                    selectedDevice?.name ||
+                    (devices.length === 0
+                      ? 'No devices found'
+                      : 'Device not found (ID: ' + preselectedDeviceId + ')')
+                  }
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  required
+                  error={!selectedDevice}
+                  helperText={
+                    !selectedDevice && devices.length > 0
+                      ? 'The selected device was not found. Please contact support.'
+                      : ''
+                  }
+                  variant="outlined"
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                />
+              ) : (
+                <Autocomplete
+                  options={devices}
+                  getOptionLabel={(option) => option.name || ''}
+                  value={devices.find(d => d.id === deviceId) || null}
+                  onChange={(e, newValue) => setDeviceId(newValue?.id || '')}
+                  renderInput={(params) => (
+                    <AutocompleteTextField
+                      {...params}
+                      label="Device"
+                      variant="outlined"
+                      required
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                    />
+                  )}
+                  disabled={loadingDevices}
+                  loading={loadingDevices}
+                />
+              )}
               <TextField
                 required
                 fullWidth

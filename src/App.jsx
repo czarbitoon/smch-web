@@ -31,22 +31,33 @@ const LoadingScreen = () => (
 );
 
 // Protected route component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { isLoading, user } = useAuth();
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && (!user || (requiredRole === "admin" && user.role !== "admin" && user.role !== "superadmin"))) {
+    // Redirect to appropriate dashboard based on actual role
+    if (user?.role === 'admin' || user?.role === 'superadmin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (user?.role === 'staff') {
+      return <Navigate to="/staff/dashboard" replace />;
+    } else {
+      return <Navigate to="/user/dashboard" replace />;
+    }
   }
 
   return children;
 };
 
 function App() {
-  const { isAuthenticated, isLoading, user, userRole } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   // Prefetch components on app load
   React.useEffect(() => {
@@ -107,49 +118,23 @@ function App() {
                 isLoading ? <LoadingScreen /> : <Navigate to={getDashboardRoute()} replace />
               }
             />
-            <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/staff/dashboard" element={<ProtectedRoute><StaffDashboard /></ProtectedRoute>} />
-            <Route path="/user/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+            {/* Main app routes with sidebar */}
             <Route
-              path="/devices"
               element={
                 <ProtectedRoute>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Suspense fallback={<LoadingScreen />}><Devices /></Suspense>} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/staff/dashboard" element={<StaffDashboard />} />
+              <Route path="/user/dashboard" element={<UserDashboard />} />
+              <Route path="/devices" element={<Devices />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/offices" element={<Office />} />
+              <Route path="/users" element={<ProtectedRoute requiredRole="admin"><Suspense fallback={<LoadingScreen />}>{React.createElement(lazy(() => import('./components/UserManagement')))}</Suspense></ProtectedRoute>} />
             </Route>
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Reports />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Settings />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/offices"
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Office />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
           </Routes>
         </Suspense>
         {/* Notification features removed */}

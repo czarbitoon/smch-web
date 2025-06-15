@@ -19,11 +19,14 @@ import {
   TextField,
   Alert,
   Chip,
-  IconButton
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { useNavigate } from 'react-router-dom';
-import AddReport from './AddReport';
 import axios from '../axiosInstance';
 import { AuthContext } from '../context/AuthProvider';
 
@@ -39,6 +42,8 @@ const Reports = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterOffice, setFilterOffice] = useState('all');
   const [offices, setOffices] = useState([]);
+  const [newStatus, setNewStatus] = useState('resolved');
+  const [orderByCreated, setOrderByCreated] = useState('latest');
   const { user } = useContext(AuthContext);
   const userRole = user?.role || 'user';
   const navigate = useNavigate();
@@ -54,7 +59,7 @@ const Reports = () => {
       interval = setInterval(fetchReports, 30000);
     }
     return () => interval && clearInterval(interval);
-  }, [isAddModalOpen, filterStatus, filterOffice]);
+  }, [isAddModalOpen, filterStatus, filterOffice, orderByCreated]);
 
   const fetchReports = async () => {
     try {
@@ -66,6 +71,7 @@ const Reports = () => {
       } else if (userRole !== 'admin' && userRole !== 'staff') {
         params.append('office_id', user.office_id);
       }
+      params.append('order_by_created', orderByCreated);
       const response = await axios.get('/api/reports', { params });
       setReports(response.data);
     } catch (error) {
@@ -101,20 +107,19 @@ const Reports = () => {
         });
         return;
       }
-
       await axios.post(`/api/reports/${selectedReport.id}/resolve`, {
-        resolution_notes: resolutionNotes
+        resolution_notes: resolutionNotes,
+        status: newStatus
       });
-      
       setSnackbar({
         open: true,
         message: 'Report resolved successfully',
         severity: 'success'
       });
-      
       setResolveDialogOpen(false);
       setResolutionNotes('');
       setSelectedReport(null);
+      setNewStatus('resolved');
       fetchReports();
     } catch (error) {
       console.error('Error resolving report:', error.response?.data || error);
@@ -139,16 +144,27 @@ const Reports = () => {
 
   const handleOpenResolveDialog = (report) => {
     setSelectedReport(report);
+    setNewStatus('resolved');
     setResolveDialogOpen(true);
   };
 
+  const getStatusLabel = (status) => {
+    switch ((status || '').toLowerCase()) {
+      case 'pending': return 'Pending';
+      case 'resolved': return 'Resolved';
+      case 'repair': return 'Repair';
+      case 'decommissioned': return 'Decommissioned';
+      default: return 'Pending'; // fallback for unknown statuses
+    }
+  };
+
   const getStatusColor = (status) => {
-    switch (status) {
+    switch ((status || '').toLowerCase()) {
       case 'resolved': return '#4caf50';
       case 'pending': return '#ff9800';
       case 'repair': return '#2196f3';
       case 'decommissioned': return '#f44336';
-      default: return '#757575';
+      default: return '#ff9800'; // fallback to Pending color
     }
   };
 
@@ -172,20 +188,6 @@ const Reports = () => {
             Reports
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          onClick={() => setIsAddModalOpen(true)}
-          sx={{
-            borderRadius: 2.5,
-            px: 3,
-            py: 1.5,
-            fontWeight: 'bold',
-            textTransform: 'none',
-            boxShadow: '0 3px 8px rgba(25, 118, 210, 0.15)'
-          }}
-        >
-          Add Report
-        </Button>
       </Box>
 
       {/* Filter Bar */}
@@ -219,6 +221,17 @@ const Reports = () => {
             </Select>
           </FormControl>
         )}
+        <FormControl sx={{ minWidth: 160 }} size="small">
+          <InputLabel>Sort By</InputLabel>
+          <Select
+            value={orderByCreated}
+            label="Sort By"
+            onChange={e => setOrderByCreated(e.target.value)}
+          >
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="earliest">Earliest</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {error && (
@@ -235,7 +248,7 @@ const Reports = () => {
             <Paper
               key={report.id}
               elevation={0}
-              onClick={() => navigate(`/reports/${report.id}`)}
+              onClick={() => handleOpenResolveDialog(report)}
               sx={{
                 p: 2.5,
                 borderRadius: 3.5,
@@ -283,7 +296,7 @@ const Reports = () => {
                   mb: 1
                 }}
               >
-                {report.status || (report.resolved_by ? 'Resolved' : 'Pending')}
+                {getStatusLabel(report.status)}
               </Typography>
               
               {/* Description */}
@@ -347,6 +360,20 @@ const Reports = () => {
             <Typography variant="subtitle1">
               Are you sure you want to resolve this report?
             </Typography>
+            <FormControl fullWidth>
+              <InputLabel id="status-select-label">New Status</InputLabel>
+              <Select
+                labelId="status-select-label"
+                value={newStatus}
+                label="New Status"
+                onChange={e => setNewStatus(e.target.value)}
+              >
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="resolved">Resolved</MenuItem>
+                <MenuItem value="repair">Repair</MenuItem>
+                <MenuItem value="decommissioned">Decommissioned</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               label="Resolution Notes"
               multiline
@@ -385,15 +412,6 @@ const Reports = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <AddReport
-        open={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          setIsAddModalOpen(false);
-          fetchReports();
-        }}
-      />
 
       <Snackbar
         open={snackbar.open}

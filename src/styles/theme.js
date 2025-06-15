@@ -17,54 +17,55 @@ document.documentElement.style.setProperty('--text-primary', '#212121');
 document.documentElement.style.setProperty('--text-secondary', '#757575');
 document.documentElement.style.setProperty('--text-disabled', '#9e9e9e');
 
-export const theme = createTheme({
+export const getTheme = (mode = 'light') => createTheme({
   palette: {
+    mode,
     background: {
-      default: '#f8f9fa',
-      paper: '#ffffff'
+      default: mode === 'dark' ? '#181a1b' : '#f8f9fa',
+      paper: mode === 'dark' ? '#23272f' : '#ffffff',
     },
     primary: {
       main: '#2196f3',
       light: '#64b5f6',
       dark: '#1976d2',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
     secondary: {
       main: '#3f51b5',
       light: '#7986cb',
       dark: '#303f9f',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
     error: {
       main: '#f44336',
       light: '#e57373',
       dark: '#d32f2f',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
     warning: {
       main: '#ff9800',
       light: '#ffb74d',
       dark: '#f57c00',
-      contrastText: '#000000'
+      contrastText: '#000000',
     },
     info: {
       main: '#00bcd4',
       light: '#4dd0e1',
       dark: '#0097a7',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
     success: {
       main: '#4caf50',
       light: '#81c784',
       dark: '#388e3c',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
     text: {
-      primary: '#212121',
-      secondary: '#757575',
-      disabled: '#9e9e9e'
+      primary: mode === 'dark' ? '#f5f5f5' : '#212121',
+      secondary: mode === 'dark' ? '#b0b0b0' : '#757575',
+      disabled: mode === 'dark' ? '#666' : '#9e9e9e',
     },
-    divider: '#e0e0e0'
+    divider: mode === 'dark' ? '#333' : '#e0e0e0',
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -119,12 +120,10 @@ export const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: '#ffffff',
-          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-          borderRadius: '16px'
-          // Removed global padding and height to fix AppBar size
-        }
-      }
+          backgroundColor: mode === 'dark' ? '#23272f' : '#ffffff',
+          color: mode === 'dark' ? '#f5f5f5' : '#212121',
+        },
+      },
     },
     MuiCard: {
       styleOverrides: {
@@ -144,19 +143,18 @@ export const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: '#ffffff',
-          color: '#212121',
-          boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)'
-        }
-      }
+          backgroundColor: mode === 'dark' ? '#23272f' : '#ffffff',
+          color: mode === 'dark' ? '#f5f5f5' : '#212121',
+        },
+      },
     },
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#ffffff',
-          borderRight: '1px solid #e0e0e0'
-        }
-      }
+          backgroundColor: mode === 'dark' ? '#181a1b' : '#ffffff',
+          color: mode === 'dark' ? '#f5f5f5' : '#212121',
+        },
+      },
     },
     MuiTextField: {
       styleOverrides: {
@@ -173,40 +171,41 @@ export const theme = createTheme({
     MuiList: {
       styleOverrides: {
         root: {
-          padding: '8px'
-        }
-      }
+          backgroundColor: 'inherit',
+          color: 'inherit',
+        },
+      },
     },
     MuiListItem: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
+          color: 'inherit',
           '&:hover': {
-            backgroundColor: '#f5f5f5'
-          }
-        }
-      }
+            backgroundColor: mode === 'dark' ? '#23272f' : '#f5f5f5',
+          },
+        },
+      },
     },
     MuiTableContainer: {
       styleOverrides: {
         root: {
-          backgroundColor: '#ffffff'
-        }
-      }
+          backgroundColor: mode === 'dark' ? '#23272f' : '#ffffff',
+        },
+      },
     },
     MuiTableHead: {
       styleOverrides: {
         root: {
-          backgroundColor: '#f5f5f5'
-        }
-      }
+          backgroundColor: mode === 'dark' ? '#23272f' : '#f5f5f5',
+        },
+      },
     },
     MuiTableBody: {
       styleOverrides: {
         root: {
-          backgroundColor: '#ffffff'
-        }
-      }
+          backgroundColor: mode === 'dark' ? '#181a1b' : '#ffffff',
+        },
+      },
     }
   },
   shape: {

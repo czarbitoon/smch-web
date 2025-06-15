@@ -40,8 +40,33 @@ const getDeviceImageUrl = (imgPath) => {
   return `${apiBase}/storage/${imgPath.replace(/^\/*(devices\/)?/, '')}`;
 };
 
+// Helper to get device type name robustly
+const getDeviceTypeName = (device, types, categories) => {
+  let typeId = device.device_type_id?.toString() || device.type?.id?.toString();
+  let foundType = types.find(t => t.id?.toString() === typeId);
+  if (foundType) return foundType.name;
+  if (Array.isArray(categories)) {
+    for (const cat of categories) {
+      if (Array.isArray(cat.types)) {
+        const t = cat.types.find(tt => tt.id?.toString() === typeId);
+        if (t) return t.name;
+      }
+    }
+  }
+  if (device.type && device.type.name) return device.type.name;
+  return 'Unknown Type';
+};
+
+const getOfficeName = (device, offices) => {
+  const officeId = device.office?.id?.toString() || device.office_id?.toString();
+  const found = offices.find(o => o.id?.toString() === officeId);
+  if (found) return found.name;
+  if (device.office && device.office.name) return device.office.name;
+  return 'Unknown Office';
+};
+
 // DeviceCard component
-function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit }) {
+function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit, types, categories, offices }) {
   return (
     <Paper
       elevation={0}
@@ -73,9 +98,9 @@ function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit }) {
         />
       </Box>
       <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#1976d2', mb: 0.5, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{device.name}</Typography>
-      <Typography variant="body2" sx={{ fontSize: '0.95rem', color: '#888', mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{device.type?.name || 'Unknown Type'}</Typography>
+      <Typography variant="body2" sx={{ fontSize: '0.95rem', color: '#888', mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{getDeviceTypeName(device, types, categories)}</Typography>
       <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'capitalize', color: device.status === 'active' ? '#4caf50' : device.status === 'maintenance' ? '#ff9800' : '#f44336', mb: 1 }}>{device.status || 'Unknown'}</Typography>
-      <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#1976d2', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{device.office?.name || 'Unknown Office'}</Typography>
+      <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#1976d2', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{getOfficeName(device, offices)}</Typography>
       <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
         <Button variant="contained" size="small" fullWidth onClick={(e) => { e.stopPropagation(); onReport(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}>Report Issue</Button>
         {(isAdmin || isStaff) && (
@@ -89,7 +114,7 @@ function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit }) {
 const Devices = () => {
   const theme = useTheme();
   const { user, userRole } = useContext(AuthContext);
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const isStaff = userRole === 'staff';
   const isUser = !isAdmin && !isStaff;
 
@@ -123,6 +148,14 @@ const Devices = () => {
     status: ''
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [officesLoading, setOfficesLoading] = useState(false);
+  const [typesLoading, setTypesLoading] = useState(false);
+  const [orderByCreated, setOrderByCreated] = useState('latest');
+
+  // Log role and user data for debugging
+  useEffect(() => {
+    console.log('User Role:', userRole, 'User:', user);
+  }, [userRole, user]);
 
   // Set default office for users and staff
   useEffect(() => {
@@ -131,28 +164,81 @@ const Devices = () => {
     }
   }, [user, isUser, isStaff]);
 
-  // Fetch categories
+  // Fetch categories and offices on mount (offices for admin/superadmin/staff)
   useEffect(() => {
-    axios.get('/api/device-categories').then(res => {
-      const cats = Array.isArray(res.data?.data) ? res.data.data :
-                   Array.isArray(res.data?.categories) ? res.data.categories :
-                   Array.isArray(res.data) ? res.data : [];
-      setCategories(cats);
-    }).catch(() => setCategories([]));
-  }, []);
+    const fetchAll = async () => {
+      try {
+        // Fetch categories
+        const catRes = await axios.get('/api/device-categories');
+        let cats = [];
+        if (catRes.data && catRes.data.data && Array.isArray(catRes.data.data.categories)) {
+          cats = catRes.data.data.categories;
+        } else if (catRes.data && Array.isArray(catRes.data.categories)) {
+          cats = catRes.data.categories;
+        } else if (Array.isArray(catRes.data)) {
+          cats = catRes.data;
+        } else if (catRes.data && Array.isArray(catRes.data.data)) {
+          cats = catRes.data.data;
+        }
+        setCategories(cats);
+      } catch (e) {
+        setCategories([]);
+      }
+      if (isAdmin || isStaff) {
+        setOfficesLoading(true);
+        try {
+          const offRes = await axios.get('/api/offices');
+          console.log('Offices API Response:', offRes.data); // Debug
+          let officesArr = [];
+          if (offRes.data && offRes.data.data && Array.isArray(offRes.data.data.offices)) {
+            officesArr = offRes.data.data.offices;
+          } else if (Array.isArray(offRes.data.offices)) {
+            officesArr = offRes.data.offices;
+          } else if (Array.isArray(offRes.data)) {
+            officesArr = offRes.data;
+          } else if (offRes.data && Array.isArray(offRes.data.data)) {
+            officesArr = offRes.data.data;
+          }
+          setOffices(officesArr);
+        } catch (e) {
+          setOffices([]);
+        } finally {
+          setOfficesLoading(false);
+        }
+      }
+    };
+    fetchAll();
+  }, [isAdmin, isStaff]);
 
   // Fetch types when category changes
   useEffect(() => {
-    if (filterCategory !== 'all') {
-      axios.get(`/api/device-categories/${filterCategory}/types`).then(res => {
-        setTypes(Array.isArray(res.data?.data?.types) ? res.data.data.types : 
-                 Array.isArray(res.data?.types) ? res.data.types : []);
-      }).catch(() => setTypes([]));
-    } else {
-      setTypes([]);
-    }
-    setFilterType('all');
-    setPage(1);
+    const fetchTypes = async () => {
+      if (filterCategory !== 'all') {
+        setTypesLoading(true);
+        try {
+          const res = await axios.get(`/api/device-categories/${filterCategory}/types`);
+          let typesArr = [];
+          if (res.data && res.data.data && Array.isArray(res.data.data.types)) {
+            typesArr = res.data.data.types;
+          } else if (Array.isArray(res.data.types)) {
+            typesArr = res.data.types;
+          } else if (Array.isArray(res.data)) {
+            typesArr = res.data;
+          }
+          setTypes(typesArr);
+        } catch (e) {
+          setTypes([]);
+        } finally {
+          setTypesLoading(false);
+        }
+      } else {
+        setTypes([]);
+        setTypesLoading(false);
+      }
+      setFilterType('all');
+      setPage(1);
+    };
+    fetchTypes();
   }, [filterCategory]);
 
   // Fetch devices
@@ -163,12 +249,15 @@ const Devices = () => {
       const params = {
         page,
         per_page: rowsPerPage,
-        ...(filterCategory !== 'all' && { device_category_id: filterCategory }),
-        ...(filterType !== 'all' && { device_type_id: filterType }),
-        ...(filterOffice !== 'all' && { office_id: filterOffice }),
-        ...(filterStatus !== 'all' && { status: filterStatus })
+        order_by_created: orderByCreated
       };
+      if (filterCategory !== 'all') params.device_category_id = filterCategory;
+      if (filterType !== 'all') params.device_type_id = filterType;
+      if (filterOffice !== 'all') params.office_id = filterOffice;
+      if (filterStatus !== 'all') params.status = filterStatus;
+      console.log('Fetch Devices Params:', params); // Debug API call
       const response = await axios.get('/api/devices', { params });
+      console.log('Fetch Devices Response:', response.data); // Debug API response
       const deviceArray = Array.isArray(response.data?.data?.data) ? response.data.data.data :
                          Array.isArray(response.data?.data) ? response.data.data : [];
       const totalCount = response.data?.data?.total || deviceArray.length;
@@ -180,6 +269,7 @@ const Devices = () => {
       setError(`Error fetching devices: ${error.response?.data?.message || error.message}`);
       setDevices([]);
       setTotalItems(0);
+      console.error('Fetch Devices Error:', error); // Debug error
     } finally {
       setLoading(false);
     }
@@ -188,6 +278,7 @@ const Devices = () => {
   // Fetch offices for admin/staff
   const fetchOffices = async () => {
     if (isAdmin || isStaff) {
+      setOfficesLoading(true);
       try {
         const response = await axios.get('/api/offices');
         setOffices(Array.isArray(response.data?.data) ? response.data.data :
@@ -195,6 +286,9 @@ const Devices = () => {
       } catch (error) {
         setError(`Error fetching offices: ${error.response?.data?.message || error.message}`);
         setOffices([]);
+        console.error('Fetch Offices Error:', error); // Debug error
+      } finally {
+        setOfficesLoading(false);
       }
     }
   };
@@ -205,6 +299,7 @@ const Devices = () => {
     fetchOffices();
     const interval = setInterval(fetchDevices, 30000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus, filterOffice, filterCategory, filterType, page]);
 
   // Handle edit device
@@ -292,11 +387,7 @@ const Devices = () => {
   };
 
   // Filter devices (no client-side pagination)
-  const filteredDevices = devices
-    .filter(device => filterStatus === 'all' || device.status === filterStatus)
-    .filter(device => filterOffice === 'all' || String(device.office_id) === String(filterOffice))
-    .filter(device => filterCategory === 'all' || String(device.category_id) === String(filterCategory))
-    .filter(device => filterType === 'all' || String(device.type_id) === String(filterType));
+  const filteredDevices = devices;
 
   // Use backend pagination
   const paginatedDevices = filteredDevices;
@@ -375,7 +466,7 @@ const Devices = () => {
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 160 }} size="small" disabled={filterCategory === 'all'}>
+        <FormControl sx={{ minWidth: 160 }} size="small" disabled={filterCategory === 'all' || typesLoading}>
           <InputLabel>Type</InputLabel>
           <Select
             value={filterType}
@@ -383,15 +474,20 @@ const Devices = () => {
             onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
           >
             <MenuItem value="all">All</MenuItem>
-            {types.map(type => (
-              <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
-            ))}
+            {typesLoading ? (
+              <MenuItem disabled>Loading...</MenuItem>
+            ) : types.length === 0 && filterCategory !== 'all' ? (
+              <MenuItem disabled>No types found</MenuItem>
+            ) : (
+              types.map(type => (
+                <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+              ))
+            )}
           </Select>
         </FormControl>
 
-        {/* Add Office filter to filter bar for admin/staff */}
         {(isAdmin || isStaff) && (
-          <FormControl sx={{ minWidth: 160 }} size="small">
+          <FormControl sx={{ minWidth: 160 }} size="small" disabled={officesLoading}>
             <InputLabel>Office</InputLabel>
             <Select
               value={filterOffice}
@@ -399,12 +495,30 @@ const Devices = () => {
               onChange={(e) => { setFilterOffice(e.target.value); setPage(1); }}
             >
               <MenuItem value="all">All</MenuItem>
-              {offices.map(office => (
-                <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
-              ))}
+              {officesLoading ? (
+                <MenuItem disabled>Loading...</MenuItem>
+              ) : offices.length === 0 ? (
+                <MenuItem disabled>No offices found</MenuItem>
+              ) : (
+                offices.map(office => (
+                  <MenuItem key={office.id} value={office.id}>{office.name}</MenuItem>
+                ))
+              )}
             </Select>
           </FormControl>
         )}
+
+        <FormControl sx={{ minWidth: 160 }} size="small">
+          <InputLabel>Sort By</InputLabel>
+          <Select
+            value={orderByCreated}
+            label="Sort By"
+            onChange={(e) => { setOrderByCreated(e.target.value); setPage(1); }}
+          >
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="earliest">Earliest</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Issue Logging Form */}
@@ -453,6 +567,9 @@ const Devices = () => {
                   setIsReportDialogOpen(true);
                 }}
                 onEdit={handleEditClick}
+                types={types}
+                categories={categories}
+                offices={offices}
               />
             </Grid>
           ))
@@ -480,9 +597,24 @@ const Devices = () => {
         </Box>
       )}
 
-      {/* Add Device Button (Page-level for admins) */}
+      {/* Add Device Button (Page-level top-right for admins/staff) */}
       {(isAdmin || isStaff) && (
         <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setIsAddDeviceOpen(true)}
+            sx={{ borderRadius: 2, fontWeight: 600 }}
+          >
+            Add Device
+          </Button>
+        </Box>
+      )}
+
+      {/* Add Device Button (Bottom for admins/staff) */}
+      {(isAdmin || isStaff) && (
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', mb: 4 }}>
           <Button
             variant="contained"
             color="primary"
@@ -639,6 +771,23 @@ const Devices = () => {
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* DEBUG: Show userRole and admin/staff flags */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, bgcolor: '#fff', px: 2, py: 0.5, borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 13 }}>
+        userRole: <b>{userRole}</b> | isAdmin: <b>{String(isAdmin)}</b> | isStaff: <b>{String(isStaff)}</b>
+      </Box>
+      {/* TEMP: Always show Add Device button for debug */}
+      <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'center' }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<AddIcon />}
+          onClick={() => setIsAddDeviceOpen(true)}
+          sx={{ borderRadius: 2, fontWeight: 600 }}
+        >
+          Add Device (DEBUG)
+        </Button>
+      </Box>
 
       {/* Snackbar */}
       <Snackbar
