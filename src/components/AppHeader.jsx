@@ -12,19 +12,18 @@ import {
   MenuItem,
   Divider,
   ListItemIcon,
-  Badge,
   Tooltip,
   useTheme
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  // Notifications as NotificationsIcon, // Removed notification feature
   AccountCircle as AccountIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthProvider';
+import NotificationBell from './NotificationBell';
 
 const AppHeader = ({ onToggleSidebar }) => {
   const location = useLocation();
@@ -60,145 +59,40 @@ const AppHeader = ({ onToggleSidebar }) => {
     navigate('/settings');
   };
 
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path.includes('dashboard')) return 'Dashboard';
-    if (path.includes('devices')) return 'Devices';
-    if (path.includes('offices')) return 'Offices';
-    if (path.includes('reports')) return 'Reports';
-    if (path.includes('settings')) return 'Settings';
-    return 'SMCH System';
-  };
-
   return (
-    <AppBar 
-      position="sticky" 
-      elevation={1}
-      sx={{ 
-        bgcolor: 'background.paper',
-        color: 'text.primary',
-        borderBottom: '1px solid',
-        borderColor: 'divider'
-      }}
-    >
-      <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
-        <IconButton
-          edge="start"
-          onClick={onToggleSidebar}
-          sx={{ 
-            mr: 2,
-            color: 'text.primary',
-            '&:hover': {
-              bgcolor: 'action.hover'
-            }
-          }}
-        >
+    <AppBar position="fixed" color="default" elevation={2} sx={{ zIndex: theme.zIndex.drawer + 1 }}>
+      <Toolbar>
+        <IconButton edge="start" color="inherit" aria-label="menu" onClick={onToggleSidebar} sx={{ mr: 2 }}>
           <MenuIcon />
         </IconButton>
-
-        <Typography 
-          variant="h6" 
-          component="h1" 
-          sx={{ 
-            flexGrow: 1,
-            fontWeight: 600,
-            color: 'text.primary'
-          }}
-        >
-          {getPageTitle()}
+        <Typography variant="h6" noWrap sx={{ flexGrow: 1, fontWeight: 900, letterSpacing: 1 }}>
+          {location.pathname === '/' ? 'Dashboard' : location.pathname.replace('/', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
         </Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Notifications feature removed */}
-
-          {/* Profile Menu */}
-          <Tooltip title="Account">
-            <IconButton
-              onClick={handleProfileMenuOpen}
-              sx={{ 
-                ml: 1,
-                '&:hover': {
-                  bgcolor: 'action.hover'
-                }
-              }}
-            >
-              <Avatar 
-                sx={{ 
-                  width: 32, 
-                  height: 32,
-                  bgcolor: 'primary.main',
-                  fontSize: '0.875rem'
-                }}
-              >
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </Avatar>
+        {/* Notification Bell */}
+        <NotificationBell />
+        {/* Profile/Settings Menu */}
+        <Box sx={{ ml: 2 }}>
+          <Tooltip title="Account settings">
+            <IconButton onClick={handleProfileMenuOpen} color="inherit" size="large">
+              {user?.profile_picture ? (
+                <Avatar src={user.profile_picture} />
+              ) : (
+                <AccountIcon fontSize="large" />
+              )}
             </IconButton>
           </Tooltip>
         </Box>
-
-        {/* Profile Menu */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleProfileMenuClose}
-          onClick={handleProfileMenuClose}
-          PaperProps={{
-            elevation: 8,
-            sx: {
-              mt: 1.5,
-              minWidth: 200,
-              '& .MuiMenuItem-root': {
-                px: 2,
-                py: 1
-              }
-            }
-          }}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant="subtitle2" fontWeight="medium">
-              {user?.name || 'User'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {user?.email || 'user@example.com'}
-            </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: 'primary.main',
-                textTransform: 'capitalize',
-                fontWeight: 500
-              }}
-            >
-              {userRole}
-            </Typography>
-          </Box>
-          
+          <MenuItem onClick={handleProfile}><ListItemIcon><PersonIcon /></ListItemIcon>Profile</MenuItem>
+          <MenuItem onClick={handleSettings}><ListItemIcon><SettingsIcon /></ListItemIcon>Settings</MenuItem>
           <Divider />
-          
-          <MenuItem onClick={handleProfile}>
-            <ListItemIcon>
-              <PersonIcon fontSize="small" />
-            </ListItemIcon>
-            Profile
-          </MenuItem>
-          
-          <MenuItem onClick={handleSettings}>
-            <ListItemIcon>
-              <SettingsIcon fontSize="small" />
-            </ListItemIcon>
-            Settings
-          </MenuItem>
-          
-          <Divider />
-          
-          <MenuItem onClick={handleLogout}>
-            <ListItemIcon>
-              <LogoutIcon fontSize="small" color="error" />
-            </ListItemIcon>
-            <Typography color="error.main">Logout</Typography>
-          </MenuItem>
+          <MenuItem onClick={handleLogout}><ListItemIcon><LogoutIcon /></ListItemIcon>Logout</MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
