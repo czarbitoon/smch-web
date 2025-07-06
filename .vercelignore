@@ -1,0 +1,7 @@
+.git
+node_modules
+.github
+railway.json
+nixpacks.toml
+Dockerfile
+Dockerfile.prod
