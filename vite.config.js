@@ -6,6 +6,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    strictPort: true
+    strictPort: true,
+    allowedHosts: ['smch-web-production.up.railway.app', 'localhost']
+  },
+  preview: {
+    port: 3000,
+    strictPort: true,
+    allowedHosts: ['smch-web-production.up.railway.app', 'localhost']
   }
 })
