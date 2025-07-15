@@ -43,6 +43,15 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // Network errors or request cancellation
     if (!error.response) {
+      // Check if it's a timeout error
+      if (error.code === 'ECONNABORTED') {
+        console.error('Request timeout:', error.message);
+        return Promise.reject({
+          message: 'Request timed out. Please try again.',
+          originalError: error
+        });
+      }
+      
       console.error('Network Error:', error.message);
       return Promise.reject({
         message: 'Network error. Please check your internet connection.',
@@ -56,7 +65,12 @@ axiosInstance.interceptors.response.use(
         // Handle unauthorized access
         console.warn('Authentication error: User not authenticated');
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        
+        // Only redirect if not already on login page to prevent infinite loops
+        if (window.location.pathname !== '/login') {
+          // Use replace to prevent back button issues
+          window.location.replace('/login');
+        }
         break;
       case 403:
         console.error('Permission denied');
@@ -95,6 +109,12 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Add CSRF token if available (for Laravel)
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrfToken) {
+      config.headers['X-CSRF-TOKEN'] = csrfToken;
     }
     
     // Log outgoing requests in development

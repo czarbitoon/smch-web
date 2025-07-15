@@ -55,19 +55,22 @@ const AuthProvider = ({ children }) => {
     setIsLoading(true);
 
     try {
-        await axios.post('/api/logout');
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-        setUserRole(null);  // Reset role to null on logout
-        setUser(null); // Reset user on logout
-        setToken(null);
+        // Only call logout API if we have a token
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            await axios.post('/api/logout');
+        }
     } catch (error) {
+        // Log the error but don't throw - we still want to clear local state
+        console.error('Logout API failed:', error);
+    } finally {
+        // Always clear local state regardless of API call success/failure
+        localStorage.removeItem('token');
         setIsAuthenticated(false);
         setUserRole(null);
         setUser(null);
         setToken(null);
-        console.error('Logout failed:', error);
-    } finally {
+        setOfficeId(null); // Also reset officeId
         setIsLoading(false);
     }
   };
@@ -135,6 +138,7 @@ const AuthProvider = ({ children }) => {
       userRole,
       setUserRole,
       officeId,
+      setOfficeId,
       user,
       setUser,
       token,
