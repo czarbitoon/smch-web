@@ -8,7 +8,11 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm install
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
 
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql pgsql   
 # Copy project files
 COPY . .
 
