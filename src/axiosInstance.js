@@ -9,9 +9,11 @@ const axiosInstance = axios.create({
     'X-Requested-With': 'XMLHttpRequest',
     'ngrok-skip-browser-warning': 'true'
   },
-  withCredentials: true, // Include cookies for CSRF protection
-  timeout: 30000, // Set timeout to 30 seconds
-  validateStatus: (status) => status >= 200 && status < 500, // Handle HTTP errors in interceptors
+  withCredentials: true,
+  // ADD THESE TWO LINES:
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+  timeout: 30000,
 });
 
 // Add a response interceptor for error handling and response validation

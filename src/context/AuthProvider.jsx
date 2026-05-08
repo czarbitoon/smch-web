@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null); // Initialize with null, will be set from backend
+  const [userRole, setUserRole] = useState(null);
   const [officeId, setOfficeId] = useState(null);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -15,6 +15,11 @@ const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
+      // 1. THE SANCTUM SHAKE: Initialize CSRF protection
+      // This is the "Magic Fix" for the 419 error over ngrok
+      await axios.get('/sanctum/csrf-cookie');
+
+      // 2. ATTEMPT LOGIN
       const response = await axios.post('/api/login', { email, password });
       const { access_token, user_role } = response.data;
       
@@ -23,10 +28,8 @@ const AuthProvider = ({ children }) => {
         setToken(access_token);
         setIsAuthenticated(true);
         
-        // Fetch user profile to get complete user data
-        const profileRes = await axios.get('/api/profile', {
-          headers: { Authorization: `Bearer ${access_token}` }
-        });
+        // 3. FETCH PROFILE (Axios interceptor will now use the new token)
+        const profileRes = await axios.get('/api/profile');
         
         const userData = profileRes.data;
         const role = userData.role || user_role || 'user';
@@ -41,10 +44,10 @@ const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login failed:', error);
+      // Clean up on failure
+      localStorage.removeItem('token');
       setIsAuthenticated(false);
-      setUserRole(null);
       setUser(null);
-      setToken(null);
       throw error;
     } finally {
       setIsLoading(false);
@@ -53,24 +56,20 @@ const AuthProvider = ({ children }) => {
 
   const logout = async () => { 
     setIsLoading(true);
-
     try {
-        // Only call logout API if we have a token
         const storedToken = localStorage.getItem('token');
         if (storedToken) {
             await axios.post('/api/logout');
         }
     } catch (error) {
-        // Log the error but don't throw - we still want to clear local state
         console.error('Logout API failed:', error);
     } finally {
-        // Always clear local state regardless of API call success/failure
         localStorage.removeItem('token');
         setIsAuthenticated(false);
         setUserRole(null);
         setUser(null);
         setToken(null);
-        setOfficeId(null); // Also reset officeId
+        setOfficeId(null);
         setIsLoading(false);
     }
   };
@@ -83,8 +82,6 @@ const AuthProvider = ({ children }) => {
       if (!storedToken) {
         if (isMounted) {
           setIsAuthenticated(false);
-          setUserRole(null);
-          setToken(null);
           setIsLoading(false);
         }
         return;
@@ -93,25 +90,21 @@ const AuthProvider = ({ children }) => {
       setToken(storedToken);
 
       try {
+        // Axios interceptor handles the Authorization header automatically
         const response = await axios.get('/api/profile');
 
         if (isMounted && response.status === 200) {
           setIsAuthenticated(true);
-          // Use backend-provided role string directly
           const role = response.data?.role || response.data?.user_role || 'user';
           setUserRole(role);
           setOfficeId(response.data?.office_id);
-          setUser({ ...response.data, role }); // Store the full user object with role
+          setUser({ ...response.data, role });
         }
       } catch (error) {
         console.error('Session validation failed:', error);
-
         if (isMounted) {
-          setIsAuthenticated(false);
-          setUserRole(null);
-          setUser(null);
-          setToken(null);
           localStorage.removeItem('token');
+          setIsAuthenticated(false);
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -120,29 +113,17 @@ const AuthProvider = ({ children }) => {
 
     checkSession();
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading SMCH Monitoring System...</div>;
   }
 
   return ( 
     <AuthContext.Provider value={{ 
-      isAuthenticated, 
-      setIsAuthenticated,
-      login,
-      logout,
-      userRole,
-      setUserRole,
-      officeId,
-      setOfficeId,
-      user,
-      setUser,
-      token,
-      isLoading
+      isAuthenticated, login, logout, userRole, 
+      officeId, user, token, isLoading 
     }}>
       {children}
     </AuthContext.Provider>
