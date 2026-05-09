@@ -25,6 +25,7 @@ import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import AddDevice from './AddDevice';
 import AddReport from './AddReport';
+import LazyImage from './LazyImage';
 import { AuthContext } from '../context/AuthProvider';
 import axios from '../axiosInstance';
 import { sequentialFetch, delay } from '../utils/fetchUtils';
@@ -67,7 +68,7 @@ const getOfficeName = (device, offices) => {
 };
 
 // DeviceCard component
-function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit, types, categories, offices }) {
+function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit, types, categories, offices, index = 0 }) {
   return (
     <Paper
       elevation={0}
@@ -87,18 +88,19 @@ function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit, types, categor
         }
       }}
     >
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160, backgroundColor: '#f5f5f5', borderRadius: 2.5, overflow: 'hidden' }}>
-        <img
-          src={getDeviceImageUrl(device.image_url || device.image)}
-          alt={device.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = getDeviceImageUrl('default.png');
-          }}
-        />
-      </Box>
-      <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#1976d2', mb: 0.5, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{device.name}</Typography>
+      {/* Staggered lazy image loading */}
+      <LazyImage
+        src={getDeviceImageUrl(device.image_url || device.image)}
+        fallbackSrc={getDeviceImageUrl('default.png')}
+        alt={device.name}
+        index={index}
+        height={160}
+        borderRadius={2.5}
+        objectFit="cover"
+        onLoadStart={() => console.log(`[Device ${index + 1}] Started loading image`)}
+        onLoadEnd={() => console.log(`[Device ${index + 1}] Finished loading image`)}
+      />
+      <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 700, color: '#1976d2', mb: 0.5, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', mt: 2 }}>{device.name}</Typography>
       <Typography variant="body2" sx={{ fontSize: '0.95rem', color: '#888', mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{getDeviceTypeName(device, types, categories)}</Typography>
       <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'capitalize', color: device.status === 'active' ? '#4caf50' : device.status === 'maintenance' ? '#ff9800' : '#f44336', mb: 1 }}>{device.status || 'Unknown'}</Typography>
       <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#1976d2', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{getOfficeName(device, offices)}</Typography>
