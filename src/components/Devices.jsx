@@ -27,6 +27,7 @@ import AddDevice from './AddDevice';
 import AddReport from './AddReport';
 import { AuthContext } from '../context/AuthProvider';
 import axios from '../axiosInstance';
+import { sequentialFetch, delay } from '../utils/fetchUtils';
 
 // Helper to get full image URL from storage path
 const getDeviceImageUrl = (imgPath) => {
@@ -166,48 +167,63 @@ const Devices = () => {
 
   // Fetch categories and offices on mount (offices for admin/superadmin/staff)
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchInitialData = async () => {
       try {
-        // Fetch categories
-        const catRes = await axios.get('/api/device-categories');
-        let cats = [];
-        if (catRes.data && catRes.data.data && Array.isArray(catRes.data.data.categories)) {
-          cats = catRes.data.data.categories;
-        } else if (catRes.data && Array.isArray(catRes.data.categories)) {
-          cats = catRes.data.categories;
-        } else if (Array.isArray(catRes.data)) {
-          cats = catRes.data;
-        } else if (catRes.data && Array.isArray(catRes.data.data)) {
-          cats = catRes.data.data;
-        }
-        setCategories(cats);
-      } catch (e) {
-        setCategories([]);
-      }
-      if (isAdmin || isStaff) {
-        setOfficesLoading(true);
+        // Sequential fetching: categories first, then offices (if admin/staff)
+        console.log('[Devices] Fetching initial data sequentially...');
+        
+        // Step 1: Fetch categories
         try {
-          const offRes = await axios.get('/api/offices');
-          console.log('Offices API Response:', offRes.data); // Debug
-          let officesArr = [];
-          if (offRes.data && offRes.data.data && Array.isArray(offRes.data.data.offices)) {
-            officesArr = offRes.data.data.offices;
-          } else if (Array.isArray(offRes.data.offices)) {
-            officesArr = offRes.data.offices;
-          } else if (Array.isArray(offRes.data)) {
-            officesArr = offRes.data;
-          } else if (offRes.data && Array.isArray(offRes.data.data)) {
-            officesArr = offRes.data.data;
+          const catRes = await axios.get('/api/device-categories');
+          let cats = [];
+          if (catRes.data && catRes.data.data && Array.isArray(catRes.data.data.categories)) {
+            cats = catRes.data.data.categories;
+          } else if (catRes.data && Array.isArray(catRes.data.categories)) {
+            cats = catRes.data.categories;
+          } else if (Array.isArray(catRes.data)) {
+            cats = catRes.data;
+          } else if (catRes.data && Array.isArray(catRes.data.data)) {
+            cats = catRes.data.data;
           }
-          setOffices(officesArr);
+          setCategories(cats);
         } catch (e) {
-          setOffices([]);
-        } finally {
-          setOfficesLoading(false);
+          console.error('Error fetching categories:', e);
+          setCategories([]);
         }
+        
+        // Add delay before fetching offices to stagger requests
+        await delay(300);
+        
+        // Step 2: Fetch offices if admin or staff
+        if (isAdmin || isStaff) {
+          setOfficesLoading(true);
+          try {
+            const offRes = await axios.get('/api/offices');
+            console.log('Offices API Response:', offRes.data);
+            let officesArr = [];
+            if (offRes.data && offRes.data.data && Array.isArray(offRes.data.data.offices)) {
+              officesArr = offRes.data.data.offices;
+            } else if (Array.isArray(offRes.data.offices)) {
+              officesArr = offRes.data.offices;
+            } else if (Array.isArray(offRes.data)) {
+              officesArr = offRes.data;
+            } else if (offRes.data && Array.isArray(offRes.data.data)) {
+              officesArr = offRes.data.data;
+            }
+            setOffices(officesArr);
+          } catch (e) {
+            console.error('Error fetching offices:', e);
+            setOffices([]);
+          } finally {
+            setOfficesLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error in fetchInitialData:', error);
       }
     };
-    fetchAll();
+    
+    fetchInitialData();
   }, [isAdmin, isStaff]);
 
   // Fetch types when category changes
@@ -293,11 +309,30 @@ const Devices = () => {
     }
   };
 
-  // Main data fetch effect
+  // Main data fetch effect - Sequential to prevent ngrok tunnel overload
   useEffect(() => {
-    fetchDevices();
-    fetchOffices();
-    const interval = setInterval(fetchDevices, 30000);
+    const fetchDataSequentially = async () => {
+      // Fetch devices first
+      await fetchDevices();
+      
+      // Add delay before fetching offices to stagger requests
+      if (isAdmin || isStaff) {
+        await delay(250);
+        await fetchOffices();
+      }
+    };
+    
+    fetchDataSequentially();
+    
+    // Set up interval for periodic device refresh (sequential with delay)
+    const interval = setInterval(async () => {
+      await fetchDevices();
+      if (isAdmin || isStaff) {
+        await delay(250);
+        await fetchOffices();
+      }
+    }, 30000);
+    
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus, filterOffice, filterCategory, filterType, page]);

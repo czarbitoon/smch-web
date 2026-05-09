@@ -4,6 +4,7 @@ import { Assessment, Build, Report, People, Logout } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import ProfilePictureUpload from './ProfilePictureUpload';
 import axios from '../axiosInstance';
+import { sequentialFetch } from '../utils/fetchUtils';
 
 function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -21,33 +22,51 @@ function AdminDashboard() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [profileRes, statsRes] = await Promise.all([
-          axios.get('/api/profile'),
-          axios.get('/api/admin/stats')
-        ]);
-        setUser(profileRes.data.user);
-        // Handle different response shapes like mobile app
-        if (statsRes.data && typeof statsRes.data === 'object') {
-          if (statsRes.data.stats) {
-            setStats({
-              users: statsRes.data.stats.users ?? 0,
-              devices: statsRes.data.stats.devices ?? 0,
-              reports: statsRes.data.stats.reports ?? 0,
-              offices: statsRes.data.stats.offices ?? 0,
-            });
-          } else {
-            setStats({
-              users: statsRes.data.users ?? statsRes.data.totalUsers ?? 0,
-              devices: statsRes.data.devices ?? statsRes.data.totalDevices ?? 0,
-              reports: statsRes.data.reports ?? statsRes.data.totalReports ?? 0,
-              offices: statsRes.data.offices ?? statsRes.data.totalOffices ?? 0,
-            });
+        // Use sequential fetching to avoid overwhelming ngrok tunnel
+        const requests = [
+          { url: '/api/profile', label: 'Profile' },
+          { url: '/api/admin/stats', label: 'Admin Stats' }
+        ];
+        
+        const results = await sequentialFetch(requests, axios, 300);
+        
+        // Process profile
+        const profileResult = results[0];
+        if (profileResult.success) {
+          setUser(profileResult.data.user);
+        }
+        
+        // Process stats
+        const statsResult = results[1];
+        if (statsResult.success) {
+          const statsRes = statsResult.data;
+          if (statsRes && typeof statsRes === 'object') {
+            if (statsRes.stats) {
+              setStats({
+                users: statsRes.stats.users ?? 0,
+                devices: statsRes.stats.devices ?? 0,
+                reports: statsRes.stats.reports ?? 0,
+                offices: statsRes.stats.offices ?? 0,
+              });
+            } else {
+              setStats({
+                users: statsRes.users ?? statsRes.totalUsers ?? 0,
+                devices: statsRes.devices ?? statsRes.totalDevices ?? 0,
+                reports: statsRes.reports ?? statsRes.totalReports ?? 0,
+                offices: statsRes.offices ?? statsRes.totalOffices ?? 0,
+              });
+            }
           }
+        }
+        
+        // Check for any errors
+        const hasErrors = results.some(r => !r.success);
+        if (hasErrors) {
+          setError('Some dashboard data could not be loaded');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
         setError('Failed to load dashboard data');
-        setLoading(false);
       } finally {
         setLoading(false);
       }
