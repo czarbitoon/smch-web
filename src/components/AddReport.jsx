@@ -4,7 +4,7 @@ import { PhotoCamera, Close } from '@mui/icons-material';
 import { reportService } from '../services/api';
 import axios from '../axiosInstance';
 
-function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
+function AddReport({ open, onClose, onSuccess, preselectedDeviceId, preselectedDeviceName }) {
   const [description, setDescription] = useState('');
   const [deviceId, setDeviceId] = useState(preselectedDeviceId || '');
   const [devices, setDevices] = useState([]);
@@ -17,12 +17,21 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
 
   useEffect(() => {
     if (open) {
-      setLoadingDevices(true);
-      fetchDevices();
       setDeviceId(preselectedDeviceId || '');
-      setSelectedDevice(null); // Always reset, will set after devices load
+      
+      // If a device is preselected, use the provided data directly without API fetch
+      if (preselectedDeviceId && preselectedDeviceName) {
+        console.log('[AddReport] Using preselected device:', { id: preselectedDeviceId, name: preselectedDeviceName });
+        setSelectedDevice({ id: preselectedDeviceId, name: preselectedDeviceName });
+        setDevices([]); // No need to fetch devices
+        setLoadingDevices(false);
+      } else {
+        // Only fetch devices if no preselection
+        setLoadingDevices(true);
+        fetchDevices();
+      }
     }
-  }, [open, preselectedDeviceId]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, preselectedDeviceId, preselectedDeviceName]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const fetchDevices = async () => {
     try {
@@ -39,10 +48,7 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
         console.warn('Unexpected API response format:', response.data);
       }
       setDevices(deviceList);
-      if (preselectedDeviceId) {
-        const device = deviceList.find(d => d.id === preselectedDeviceId);
-        setSelectedDevice(device || null);
-      }
+      setSelectedDevice(null);
     } catch (error) {
       console.error('Error fetching devices:', error);
       setDevices([]);
@@ -88,9 +94,17 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
     }
 
     try {
-      const selectedDevice = devices.find(d => d.id === deviceId) || { name: 'Unknown Device' };
+      // If device was preselected, use preselectedDeviceName; otherwise find from devices array
+      let deviceName = preselectedDeviceName || preselectedDeviceId;
+      if (!preselectedDeviceId && devices.length > 0) {
+        const foundDevice = devices.find(d => d.id === deviceId);
+        if (foundDevice) {
+          deviceName = foundDevice.name;
+        }
+      }
+
       const formData = new FormData();
-      formData.append('title', `Issue Report - ${selectedDevice.name}`);
+      formData.append('title', `Issue Report - ${deviceName}`);
       formData.append('description', description);
       formData.append('device_id', deviceId);
       formData.append('status', 'pending');
@@ -161,34 +175,24 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId }) {
           <DialogContent sx={{ py: 2 }}>
             <Stack spacing={3}>
               {/* Device Field */}
-              {loadingDevices ? (
+              {preselectedDeviceId && preselectedDeviceName ? (
+                // Device is preselected - show read-only field
                 <TextField
                   label="Device"
-                  value="Loading devices..."
+                  value={preselectedDeviceName}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   required
                   variant="outlined"
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
                 />
-              ) : preselectedDeviceId ? (
+              ) : loadingDevices ? (
                 <TextField
                   label="Device"
-                  value={
-                    selectedDevice?.name ||
-                    (devices.length === 0
-                      ? 'No devices found'
-                      : 'Device not found (ID: ' + preselectedDeviceId + ')')
-                  }
+                  value="Loading devices..."
                   InputProps={{ readOnly: true }}
                   fullWidth
                   required
-                  error={!selectedDevice}
-                  helperText={
-                    !selectedDevice && devices.length > 0
-                      ? 'The selected device was not found. Please contact support.'
-                      : ''
-                  }
                   variant="outlined"
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
                 />

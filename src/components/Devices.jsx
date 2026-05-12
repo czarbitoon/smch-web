@@ -695,6 +695,7 @@ const Devices = () => {
         open={isReportDialogOpen}
         onClose={() => setIsReportDialogOpen(false)}
         preselectedDeviceId={selectedDevice?.id || ''}
+        preselectedDeviceName={selectedDevice?.name || ''}
         onSuccess={() => {
           setIsReportDialogOpen(false);
           setSnackbar({
