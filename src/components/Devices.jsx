@@ -24,7 +24,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import AddDevice from './AddDevice';
-import AddReport from './AddReport';
+import CreateTicket from './CreateTicket';
 import LazyImage from './LazyImage';
 import { AuthContext } from '../context/AuthProvider';
 import axios from '../axiosInstance';
@@ -105,7 +105,7 @@ function DeviceCard({ device, isAdmin, isStaff, onReport, onEdit, types, categor
       <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'capitalize', color: device.status === 'active' ? '#4caf50' : device.status === 'maintenance' ? '#ff9800' : '#f44336', mb: 1 }}>{device.status || 'Unknown'}</Typography>
       <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#1976d2', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{getOfficeName(device, offices)}</Typography>
       <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
-        <Button variant="contained" size="small" fullWidth onClick={(e) => { e.stopPropagation(); onReport(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}>Report Issue</Button>
+        <Button variant="contained" size="small" fullWidth onClick={(e) => { e.stopPropagation(); onReport(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}>Create Ticket</Button>
         {(isAdmin || isStaff) && (
           <Button variant="outlined" size="small" onClick={(e) => { e.stopPropagation(); onEdit(device); }} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', minWidth: 'auto', px: 1.5 }}>Edit</Button>
         )}
@@ -140,7 +140,7 @@ const Devices = () => {
   const [editTypes, setEditTypes] = useState([]);
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [editDevice, setEditDevice] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -601,7 +601,7 @@ const Devices = () => {
                 isStaff={isStaff}
                 onReport={(device) => {
                   setSelectedDevice(device);
-                  setIsReportDialogOpen(true);
+                  setIsCreateTicketOpen(true);
                 }}
                 onEdit={handleEditClick}
                 types={types}
@@ -690,17 +690,17 @@ const Devices = () => {
         }}
       />
 
-      {/* Report Dialog */}
-      <AddReport
-        open={isReportDialogOpen}
-        onClose={() => setIsReportDialogOpen(false)}
+      {/* Create Ticket Dialog */}
+      <CreateTicket
+        open={isCreateTicketOpen}
+        onClose={() => setIsCreateTicketOpen(false)}
         preselectedDeviceId={selectedDevice?.id || ''}
         preselectedDeviceName={selectedDevice?.name || ''}
         onSuccess={() => {
-          setIsReportDialogOpen(false);
+          setIsCreateTicketOpen(false);
           setSnackbar({
             open: true,
-            message: 'Report submitted successfully',
+            message: 'Ticket created successfully',
             severity: 'success'
           });
           fetchDevices();

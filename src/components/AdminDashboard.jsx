@@ -1,10 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, Button, Avatar, Grid, Paper, CircularProgress, Alert } from '@mui/material';
-import { Assessment, Build, Report, People, Logout } from '@mui/icons-material';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  Button, 
+  Avatar, 
+  Grid, 
+  Paper, 
+  CircularProgress, 
+  Alert,
+  Chip,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import { 
+  Assessment, 
+  Build, 
+  Report, 
+  People, 
+  Logout,
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import ProfilePictureUpload from './ProfilePictureUpload';
 import axios from '../axiosInstance';
 import { sequentialFetch } from '../utils/fetchUtils';
+import { CompleteDashboardSkeleton, StatsCardsSkeleton } from './DashboardSkeleton';
+import HealthChart from './HealthChart';
 
 function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -17,6 +40,8 @@ function AdminDashboard() {
     offices: 0
   });
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -87,19 +112,48 @@ function AdminDashboard() {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', bgcolor: 'background.default' }}>
-        <CircularProgress size={60} />
+      <Container maxWidth="lg" sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+        <CompleteDashboardSkeleton />
       </Container>
     );
   }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4, minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5, px: 1 }}>
-        <Typography variant="h3" sx={{ fontWeight: 900, color: 'primary.dark', letterSpacing: 1 }}>
-          Admin Dashboard
-        </Typography>
+      {/* Header Section - Mission Control Style */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 5, 
+          px: 1,
+          gap: 2,
+          flexWrap: 'wrap'
+        }}
+      >
+        <Box>
+          <Typography 
+            variant="h3" 
+            sx={{ 
+              fontWeight: 900, 
+              color: 'primary.main', 
+              letterSpacing: 1,
+              mb: 0.5
+            }}
+          >
+            Mission Control
+          </Typography>
+          <Typography 
+            variant="subtitle2" 
+            sx={{ 
+              color: 'text.secondary',
+              fontWeight: 500
+            }}
+          >
+            Hardware Monitoring System
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           color="error"
@@ -110,94 +164,535 @@ function AdminDashboard() {
             px: 4,
             py: 1.5,
             fontWeight: 'bold',
-            fontSize: '1.1rem',
+            fontSize: '1rem',
             boxShadow: 3,
-            transition: 'all 0.2s',
-            '&:hover': { background: 'error.dark', transform: 'scale(1.04)' }
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': { 
+              background: 'error.dark', 
+              transform: 'translateY(-2px)',
+              boxShadow: 6
+            }
           }}
         >
           Logout
         </Button>
       </Box>
 
+      {/* Alert Section */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3, fontSize: 18, borderRadius: 2 }}>{error}</Alert>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 3, 
+            fontSize: 16, 
+            borderRadius: 2,
+            animation: 'slideDown 0.3s ease-in-out',
+            '@keyframes slideDown': {
+              from: { transform: 'translateY(-20px)', opacity: 0 },
+              to: { transform: 'translateY(0)', opacity: 1 }
+            }
+          }}
+        >
+          {error}
+        </Alert>
       )}
 
-      {/* Profile Card */}
+      {/* Profile Card - Enhanced */}
       {user && (
         <Paper 
           elevation={6} 
           sx={{ 
-            p: 5, mb: 5, borderRadius: 4, textAlign: 'center',
+            p: 4, 
+            mb: 5, 
+            borderRadius: 4, 
+            textAlign: 'center',
             bgcolor: 'background.paper',
             boxShadow: 6,
+            background: `linear-gradient(135deg, ${theme.palette.primary.light}15 0%, ${theme.palette.secondary.light}15 100%)`,
             position: 'relative',
-            overflow: 'visible',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+            },
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: 8,
+              transform: 'translateY(-2px)'
+            }
           }}
         >
-          <Avatar
-            src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : undefined}
-            sx={{ 
-              width: 96, height: 96, mx: 'auto', mb: 2, backgroundColor: 'primary.light',
-              border: '4px solid', borderColor: 'primary.dark', boxShadow: 2,
-              fontSize: 40, fontWeight: 700
-            }}
-          >
-            {!user.profile_picture && user.name?.charAt(0)}
-          </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5, color: 'primary.dark', letterSpacing: 0.5 }}>{user.name}</Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: 18 }}>{user.email}</Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm="auto" sx={{ mx: 'auto', textAlign: 'center' }}>
+              <Avatar
+                src={user.profile_picture ? `${import.meta.env.VITE_API_BASE_URL}/storage/${user.profile_picture}` : undefined}
+                sx={{ 
+                  width: 96, 
+                  height: 96, 
+                  mx: 'auto', 
+                  backgroundColor: 'primary.light',
+                  border: `4px solid ${theme.palette.primary.dark}`, 
+                  boxShadow: 3,
+                  fontSize: 40, 
+                  fontWeight: 700
+                }}
+              >
+                {!user.profile_picture && user.name?.charAt(0)}
+              </Avatar>
+            </Grid>
+            <Grid item xs={12} sm sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 800, 
+                  mb: 0.5, 
+                  color: 'primary.main', 
+                  letterSpacing: 0.5 
+                }}
+              >
+                {user.name}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ fontSize: 16, mb: 1 }}
+              >
+                {user.email}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+                <Chip 
+                  label="Administrator" 
+                  color="primary" 
+                  variant="outlined"
+                  size="small"
+                  sx={{ fontWeight: 600 }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
         </Paper>
       )}
 
       {/* Section Divider */}
-      <Box sx={{ mb: 4, mt: 2, borderBottom: 2, borderColor: 'divider', width: '100%' }} />
+      <Box sx={{ mb: 5, borderBottom: 2, borderColor: 'divider', width: '100%' }} />
 
-      {/* Stats Widgets */}
+      {/* System Health Chart */}
+      <HealthChart stats={stats} />
+
+      {/* Section Divider */}
+      <Box sx={{ mb: 5, borderBottom: 2, borderColor: 'divider', width: '100%' }} />
+
+      {/* Stats Widgets - Card-based Stats */}
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          fontWeight: 700, 
+          mb: 3, 
+          color: 'text.primary',
+          letterSpacing: 0.5
+        }}
+      >
+        System Metrics
+      </Typography>
       <Grid container spacing={3} sx={{ mb: 6 }}>
-        {/* Stats Widgets */}
+        {/* Users Card */}
         <Grid item xs={12} sm={6} md={3}>
-          <Paper elevation={4} sx={{ p: 4, textAlign: 'center', borderRadius: 4, bgcolor: 'background.paper', boxShadow: 4, transition: 'all 0.2s', '&:hover': { boxShadow: 8, transform: 'scale(1.04)' }, cursor: 'pointer' }}>
-            <Box sx={{ mb: 1 }}><People sx={{ fontSize: 38, color: 'primary.dark' }} /></Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'primary.dark', fontSize: 18 }}>Users</Typography>
-            <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', fontSize: 38 }}>{stats.users}</Typography>
+          <Paper 
+            elevation={4} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center', 
+              borderRadius: 4, 
+              bgcolor: 'background.paper', 
+              boxShadow: 4,
+              transition: 'all 0.3s ease-in-out',
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: theme.palette.primary.main
+              },
+              '&:hover': { 
+                boxShadow: 8, 
+                transform: 'translateY(-4px)',
+                backgroundColor: `${theme.palette.primary.main}08`
+              }
+            }}
+          >
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: '50%', 
+                backgroundColor: `${theme.palette.primary.main}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <People sx={{ fontSize: 32, color: 'primary.main' }} />
+              </Box>
+            </Box>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1, 
+                color: 'text.secondary', 
+                fontSize: 13,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+              }}
+            >
+              Total Users
+            </Typography>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontWeight: 900, 
+                color: 'primary.main', 
+                fontSize: 36 
+              }}
+            >
+              {stats.users}
+            </Typography>
           </Paper>
         </Grid>
+
+        {/* Devices Card */}
         <Grid item xs={12} sm={6} md={3}>
-          <Paper elevation={4} sx={{ p: 4, textAlign: 'center', borderRadius: 4, bgcolor: 'background.paper', boxShadow: 4, transition: 'all 0.2s', '&:hover': { boxShadow: 8, transform: 'scale(1.04)' }, cursor: 'pointer' }}>
-            <Box sx={{ mb: 1 }}><Build sx={{ fontSize: 38, color: 'primary.dark' }} /></Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'primary.dark', fontSize: 18 }}>Devices</Typography>
-            <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', fontSize: 38 }}>{stats.devices}</Typography>
+          <Paper 
+            elevation={4} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center', 
+              borderRadius: 4, 
+              bgcolor: 'background.paper', 
+              boxShadow: 4,
+              transition: 'all 0.3s ease-in-out',
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: theme.palette.success.main
+              },
+              '&:hover': { 
+                boxShadow: 8, 
+                transform: 'translateY(-4px)',
+                backgroundColor: `${theme.palette.success.main}08`
+              }
+            }}
+          >
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: '50%', 
+                backgroundColor: `${theme.palette.success.main}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Build sx={{ fontSize: 32, color: 'success.main' }} />
+              </Box>
+            </Box>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1, 
+                color: 'text.secondary', 
+                fontSize: 13,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+              }}
+            >
+              Active Devices
+            </Typography>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontWeight: 900, 
+                color: 'success.main', 
+                fontSize: 36 
+              }}
+            >
+              {stats.devices}
+            </Typography>
           </Paper>
         </Grid>
+
+        {/* Reports Card */}
         <Grid item xs={12} sm={6} md={3}>
-          <Paper elevation={4} sx={{ p: 4, textAlign: 'center', borderRadius: 4, bgcolor: 'background.paper', boxShadow: 4, transition: 'all 0.2s', '&:hover': { boxShadow: 8, transform: 'scale(1.04)' }, cursor: 'pointer' }}>
-            <Box sx={{ mb: 1 }}><Report sx={{ fontSize: 38, color: 'primary.dark' }} /></Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'primary.dark', fontSize: 18 }}>Reports</Typography>
-            <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', fontSize: 38 }}>{stats.reports}</Typography>
+          <Paper 
+            elevation={4} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center', 
+              borderRadius: 4, 
+              bgcolor: 'background.paper', 
+              boxShadow: 4,
+              transition: 'all 0.3s ease-in-out',
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: theme.palette.warning.main
+              },
+              '&:hover': { 
+                boxShadow: 8, 
+                transform: 'translateY(-4px)',
+                backgroundColor: `${theme.palette.warning.main}08`
+              }
+            }}
+          >
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: '50%', 
+                backgroundColor: `${theme.palette.warning.main}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Report sx={{ fontSize: 32, color: 'warning.main' }} />
+              </Box>
+            </Box>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1, 
+                color: 'text.secondary', 
+                fontSize: 13,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+              }}
+            >
+              Total Tickets
+            </Typography>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontWeight: 900, 
+                color: 'warning.main', 
+                fontSize: 36 
+              }}
+            >
+              {stats.reports}
+            </Typography>
           </Paper>
         </Grid>
+
+        {/* Offices Card */}
         <Grid item xs={12} sm={6} md={3}>
-          <Paper elevation={4} sx={{ p: 4, textAlign: 'center', borderRadius: 4, bgcolor: 'background.paper', boxShadow: 4, transition: 'all 0.2s', '&:hover': { boxShadow: 8, transform: 'scale(1.04)' }, cursor: 'pointer' }}>
-            <Box sx={{ mb: 1 }}><Assessment sx={{ fontSize: 38, color: 'primary.dark' }} /></Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'primary.dark', fontSize: 18 }}>Offices</Typography>
-            <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', fontSize: 38 }}>{stats.offices}</Typography>
+          <Paper 
+            elevation={4} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center', 
+              borderRadius: 4, 
+              bgcolor: 'background.paper', 
+              boxShadow: 4,
+              transition: 'all 0.3s ease-in-out',
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: theme.palette.info.main
+              },
+              '&:hover': { 
+                boxShadow: 8, 
+                transform: 'translateY(-4px)',
+                backgroundColor: `${theme.palette.info.main}08`
+              }
+            }}
+          >
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: '50%', 
+                backgroundColor: `${theme.palette.info.main}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Assessment sx={{ fontSize: 32, color: 'info.main' }} />
+              </Box>
+            </Box>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1, 
+                color: 'text.secondary', 
+                fontSize: 13,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+              }}
+            >
+              Offices
+            </Typography>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontWeight: 900, 
+                color: 'info.main', 
+                fontSize: 36 
+              }}
+            >
+              {stats.offices}
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
 
       {/* Section Divider */}
-      <Box sx={{ mb: 4, borderBottom: 2, borderColor: 'divider', width: '100%' }} />
+      <Box sx={{ mb: 5, borderBottom: 2, borderColor: 'divider', width: '100%' }} />
 
-      {/* Menu Section */}
-      <Grid container spacing={3}>
+      {/* Navigation Menu - Enterprise Style */}
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          fontWeight: 700, 
+          mb: 3, 
+          color: 'text.primary',
+          letterSpacing: 0.5
+        }}
+      >
+        Quick Navigation
+      </Typography>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={6}>
           <Button
             variant="contained"
             fullWidth
             onClick={() => navigate('/devices')}
             startIcon={<Build />}
+            sx={{
+              py: 3,
+              borderRadius: 4,
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: 3,
+              letterSpacing: 0.5,
+              bgcolor: 'primary.main',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': { 
+                bgcolor: 'primary.dark', 
+                transform: 'translateY(-2px)',
+                boxShadow: 6
+              }
+            }}
+          >
+            Manage Devices
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/offices')}
+            startIcon={<Assessment />}
+            sx={{
+              py: 3,
+              borderRadius: 4,
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: 3,
+              letterSpacing: 0.5,
+              bgcolor: 'success.main',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': { 
+                bgcolor: 'success.dark', 
+                transform: 'translateY(-2px)',
+                boxShadow: 6
+              }
+            }}
+          >
+            View Offices
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/reports')}
+            startIcon={<Report />}
+            sx={{
+              py: 3,
+              borderRadius: 4,
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: 3,
+              letterSpacing: 0.5,
+              bgcolor: 'warning.main',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': { 
+                bgcolor: 'warning.dark', 
+                transform: 'translateY(-2px)',
+                boxShadow: 6
+              }
+            }}
+          >
+            View Tickets
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => navigate('/users')}
+            startIcon={<People />}
+            sx={{
+              py: 3,
+              borderRadius: 4,
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              boxShadow: 3,
+              letterSpacing: 0.5,
+              bgcolor: 'info.main',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': { 
+                bgcolor: 'info.dark', 
+                transform: 'translateY(-2px)',
+                boxShadow: 6
+              }
+            }}
+          >
+            Manage Users
+          </Button>
+        </Grid>
+      </Grid>
+    </Container>
+  );
+}
             sx={{
               py: 2.5,
               borderRadius: 4,
