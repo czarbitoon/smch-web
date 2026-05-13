@@ -15,12 +15,29 @@ const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      // 1. THE SANCTUM SHAKE: Initialize CSRF protection
-      // This is the "Magic Fix" for the 419 error over ngrok
-      await axios.get('/sanctum/csrf-cookie');
+      // 1. Fetch CSRF token
+      await axios.get('/sanctum/csrf-cookie', {
+        withCredentials: true
+      });
 
-      // 2. ATTEMPT LOGIN
-      const response = await axios.post('/api/login', { email, password });
+      // 2. Extract CSRF token from cookies
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('XSRF-TOKEN='))
+        ?.split('=')[1];
+
+      // 3. Attempt login with CSRF token
+      const response = await axios.post('/api/login', 
+        { email, password },
+        {
+          headers: {
+            'X-CSRF-TOKEN': csrfToken || '',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          withCredentials: true
+        }
+      );
+      
       const { access_token, user_role } = response.data;
       
       if (access_token) {
