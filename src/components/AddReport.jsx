@@ -120,7 +120,7 @@ function AddReport({ open, onClose, onSuccess, preselectedDeviceId, preselectedD
       }
 
       const token = localStorage.getItem('token');
-      const response = await axios.post('/reports', formData, {
+      const response = await axios.post('/api/reports', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
