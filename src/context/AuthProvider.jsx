@@ -15,23 +15,12 @@ const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      // 1. Fetch CSRF token
-      await axios.get('/sanctum/csrf-cookie', {
-        withCredentials: true
-      });
-
-      // 2. Extract CSRF token from cookies
-      const csrfToken = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('XSRF-TOKEN='))
-        ?.split('=')[1];
-
-      // 3. Attempt login with CSRF token
+      // For API authentication with Sanctum, we use Bearer tokens, not CSRF
+      // POST directly to login endpoint
       const response = await axios.post('/api/login', 
         { email, password },
         {
           headers: {
-            'X-CSRF-TOKEN': csrfToken || '',
             'X-Requested-With': 'XMLHttpRequest',
           },
           withCredentials: true
@@ -41,12 +30,22 @@ const AuthProvider = ({ children }) => {
       const { access_token, user_role } = response.data;
       
       if (access_token) {
+        // Store token in localStorage
         localStorage.setItem('token', access_token);
         setToken(access_token);
+        
+        // Update axios instance with new token
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        
         setIsAuthenticated(true);
         
-        // 3. FETCH PROFILE (Axios interceptor will now use the new token)
-        const profileRes = await axios.get('/api/profile');
+        // Fetch profile using the new token
+        const profileRes = await axios.get('/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${access_token}`,
+          },
+          withCredentials: true
+        });
         
         const userData = profileRes.data;
         const role = userData.role || user_role || 'user';
