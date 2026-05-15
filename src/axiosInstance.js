@@ -10,9 +10,6 @@ const axiosInstance = axios.create({
     'ngrok-skip-browser-warning': 'true'
   },
   withCredentials: true,
-  // ADD THESE TWO LINES:
-  xsrfCookieName: 'XSRF-TOKEN',
-  xsrfHeaderName: 'X-XSRF-TOKEN',
   timeout: 30000,
 });
 
